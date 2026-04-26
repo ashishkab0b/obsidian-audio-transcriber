@@ -35,11 +35,12 @@ export class AudioRecorderSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
+		// API Keys section
 		containerEl.createEl('h2', { text: 'API Keys' });
 
 		new Setting(containerEl)
 			.setName('AssemblyAI API Key')
-			.setDesc('Your AssemblyAI API key for transcription and speaker diarization')
+			.setDesc('API key for speech-to-text transcription and speaker diarization')
 			.addText((text) =>
 				text
 					.setPlaceholder('Enter your AssemblyAI API key')
@@ -52,7 +53,7 @@ export class AudioRecorderSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('OpenAI API Key')
-			.setDesc('Your OpenAI API key for summarization')
+			.setDesc('API key for meeting analysis (outline, action items, executive summary)')
 			.addText((text) =>
 				text
 					.setPlaceholder('Enter your OpenAI API key')
@@ -63,9 +64,12 @@ export class AudioRecorderSettingTab extends PluginSettingTab {
 					})
 			);
 
+		// Summarization settings section
+		containerEl.createEl('h2', { text: 'Summarization' });
+
 		new Setting(containerEl)
 			.setName('Temperature')
-			.setDesc('Creativity level for summaries (0.0 = precise, 1.0 = creative)')
+			.setDesc('Controls randomness in analysis: 0.0 = precise/deterministic, 1.0 = creative/varied')
 			.addSlider((slider) =>
 				slider
 					.setLimits(0, 1, 0.1)
@@ -78,8 +82,8 @@ export class AudioRecorderSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Summary Verbosity')
-			.setDesc('How detailed should summaries be?')
+			.setName('Summary Length')
+			.setDesc('Brief = 2-3 sentences | Detailed = 4-6 sentences')
 			.addDropdown((dropdown) =>
 				dropdown
 					.addOption('brief', 'Brief')
@@ -91,11 +95,12 @@ export class AudioRecorderSettingTab extends PluginSettingTab {
 					})
 			);
 
-		containerEl.createEl('h2', { text: 'Output Folders' });
+		// Output and behavior section
+		containerEl.createEl('h2', { text: 'Output' });
 
 		new Setting(containerEl)
 			.setName('Audio Folder')
-			.setDesc('Folder to save audio recordings (default: recordings/audio)')
+			.setDesc('Where to save meeting recordings')
 			.addText((text) =>
 				text
 					.setPlaceholder('recordings/audio')
@@ -108,7 +113,7 @@ export class AudioRecorderSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Transcript Folder')
-			.setDesc('Folder to save transcript files (default: recordings/transcripts)')
+			.setDesc('Where to save diarized transcripts')
 			.addText((text) =>
 				text
 					.setPlaceholder('recordings/transcripts')
@@ -120,8 +125,8 @@ export class AudioRecorderSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Notes Folder')
-			.setDesc('Folder to save summary notes (default: recordings)')
+			.setName('Summary Folder')
+			.setDesc('Where to save summary notes')
 			.addText((text) =>
 				text
 					.setPlaceholder('recordings')
@@ -133,8 +138,8 @@ export class AudioRecorderSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Auto-open summary note')
-			.setDesc('Automatically open the generated summary note after processing')
+			.setName('Auto-open summary')
+			.setDesc('Automatically open the summary note after processing completes')
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.autoOpenNote)

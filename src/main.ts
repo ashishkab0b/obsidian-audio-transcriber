@@ -12,8 +12,8 @@ export default class AudioRecorderPlugin extends Plugin {
 		// Register the ItemView
 		this.registerView(RECORDING_VIEW_TYPE, (leaf) => new RecordingView(leaf, this));
 
-		// Add ribbon icon to open the recorder panel
-		this.addRibbonIcon('mic', 'Open audio recorder', () => {
+		// Add ribbon icon to open the transcriber panel
+		this.addRibbonIcon('mic', 'Open audio transcriber', () => {
 			this.activateRecordingView();
 		});
 
