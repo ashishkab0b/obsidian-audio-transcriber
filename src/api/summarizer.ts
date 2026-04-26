@@ -1,4 +1,5 @@
 import { DiarizedSegment, SessionType, SummaryResult, TimestampedNote } from '../types';
+import { getSystemPrompt } from './prompts';
 
 interface OpenAIMessage {
 	role: 'system' | 'user' | 'assistant';
@@ -34,7 +35,7 @@ export class Summarizer {
 		const transcript = this.formatTranscript(segments);
 		const notesText = this.formatNotes(notes);
 
-		const systemPrompt = this.getSystemPrompt(sessionType, verbosity);
+		const systemPrompt = getSystemPrompt(sessionType, verbosity);
 		const userPrompt = `${transcript}\n\nUser notes during recording:\n${notesText}`;
 
 		const messages: OpenAIMessage[] = [
@@ -77,50 +78,31 @@ export class Summarizer {
 		}
 	}
 
-	private getSystemPrompt(sessionType: SessionType, verbosity: 'brief' | 'detailed'): string {
-		const verbosityLevel = verbosity === 'brief' ? '2-3' : '4-6';
+	estimateCost(inputTokens: number, outputTokens: number): number {
+		// Rough estimates for various OpenAI models:
+		// gpt-4o: $0.0025 per 1K input tokens, $0.010 per 1K output tokens
+		// gpt-4-turbo: $0.01 per 1K input, $0.03 per 1K output
+		// gpt-3.5-turbo: $0.0005 per 1K input, $0.0015 per 1K output
 
-		if (sessionType === 'meeting') {
-			return `You are an expert meeting summarizer. Your task is to analyze the meeting transcript and extract key information.
+		let inputCost = 0;
+		let outputCost = 0;
 
-Return a JSON object with the following structure:
-{
-	"summary": "A concise overview of the meeting (${verbosityLevel} sentences)",
-	"outline": ["key point 1", "key point 2", ...],
-	"decisions": ["decision 1", "decision 2", ...],
-	"actionItems": [
-		{"owner": "Name", "task": "Description", "deadline": "timeframe"},
-		...
-	],
-	"takeaways": []
-}
-
-Focus on:
-- Key decisions made
-- Action items with clear owners
-- Important discussion points
-- Next steps`;
+		if (this.model.includes('gpt-4o')) {
+			inputCost = (inputTokens / 1000) * 0.0025;
+			outputCost = (outputTokens / 1000) * 0.01;
+		} else if (this.model.includes('gpt-4-turbo')) {
+			inputCost = (inputTokens / 1000) * 0.01;
+			outputCost = (outputTokens / 1000) * 0.03;
 		} else {
-			return `You are an expert lecture/talk summarizer. Your task is to extract the main ideas and structure from the talk.
-
-Return a JSON object with the following structure:
-{
-	"summary": "A concise overview of the talk (${verbosityLevel} sentences)",
-	"outline": ["main idea 1", "main idea 2", ...],
-	"decisions": [],
-	"actionItems": [],
-	"takeaways": ["key takeaway 1", "key takeaway 2", ...]
-}
-
-Focus on:
-- Main themes and ideas
-- Key arguments and evidence
-- Learning outcomes
-- Practical applications`;
+			// Default to gpt-3.5-turbo rates
+			inputCost = (inputTokens / 1000) * 0.0005;
+			outputCost = (outputTokens / 1000) * 0.0015;
 		}
+
+		return Math.round((inputCost + outputCost) * 100) / 100;
 	}
 
-	private formatTranscript(segments: DiarizedSegment[]): string {
+private formatTranscript(segments: DiarizedSegment[]): string {
 		const lines = segments.map((seg) => {
 			const timeStr = this.formatTime(seg.start);
 			return `[${timeStr}] ${seg.speaker}: ${seg.text}`;

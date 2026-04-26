@@ -155,4 +155,17 @@ export class AssemblyAIClient {
 		const transcriptId = await this.submitTranscript(uploadUrl);
 		return this.pollTranscript(transcriptId);
 	}
+
+	calculateTranscriptionCost(segments: DiarizedSegment[]): number {
+		// Calculate total duration of audio in seconds
+		if (segments.length === 0) return 0;
+
+		const maxEndTime = Math.max(...segments.map(s => s.end));
+		const durationSeconds = maxEndTime / 1000; // convert from ms to seconds
+		const durationMinutes = durationSeconds / 60;
+
+		// AssemblyAI costs $0.25 per minute for audio-only (can vary by model)
+		// Using $0.25/min as a conservative estimate
+		return Math.round(durationMinutes * 0.25 * 100) / 100; // Round to 2 decimal places
+	}
 }

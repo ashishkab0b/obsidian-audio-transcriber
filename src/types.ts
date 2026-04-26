@@ -26,6 +26,12 @@ export interface SummaryResult {
 	takeaways: string[]; // lecture only
 }
 
+export interface APICost {
+	service: 'assemblyai' | 'openai';
+	amount: number; // in USD
+	description: string;
+}
+
 export interface RecordingSession {
 	sessionType: SessionType;
 	startTime: Date;
@@ -33,4 +39,5 @@ export interface RecordingSession {
 	audioBlob: Blob | null;
 	segments: DiarizedSegment[];
 	summary: SummaryResult | null;
+	apiCosts: APICost[];
 }

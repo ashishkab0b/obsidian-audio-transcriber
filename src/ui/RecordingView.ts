@@ -18,7 +18,6 @@ export class RecordingView extends ItemView {
 	private recorder: AudioRecorder | null = null;
 	private timerInterval: number | null = null;
 	private animationFrame: number | null = null;
-	private canvasContext: CanvasRenderingContext2D | null = null;
 	private targetNoteFile: any = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: AudioRecorderPlugin) {
@@ -99,55 +98,22 @@ export class RecordingView extends ItemView {
 
 		content.createEl('h3', { text: 'Audio Recorder' });
 
-		if (!this.targetNoteFile) {
-			const hint = content.createEl('p');
-			hint.innerHTML = '<strong>How to use:</strong><br/>1. Open a note<br/>2. Run command: <code>Start recording in this note</code><br/>3. Select session type and record';
-			hint.style.color = 'var(--text-muted)';
-			hint.style.fontSize = '0.9em';
-			hint.style.lineHeight = '1.5';
-			return;
-		}
-
-		const noteInfo = content.createEl('p', { text: '📝 Recording into: ' + this.targetNoteFile.basename });
-		noteInfo.style.color = 'var(--text-success)';
-		noteInfo.style.fontSize = '0.9em';
-
-		const form = content.createDiv('form');
-
-		const sessionLabel = form.createEl('label', { text: 'Session type' });
-		sessionLabel.createEl('br');
-
-		const select = form.createEl('select');
-		const optionMeeting = select.createEl('option', { text: 'Meeting' });
-		optionMeeting.value = 'meeting';
-		const optionLecture = select.createEl('option', { text: 'Talk / Lecture' });
-		optionLecture.value = 'lecture';
-
-		form.createEl('br');
-		form.createEl('br');
-
-		const button = form.createEl('button', { text: 'Start Recording' });
-		button.type = 'button';
-		button.addEventListener('click', () => {
-			const sessionType = select.value as SessionType;
-			this.startRecording(sessionType);
-		});
+		const hint = content.createEl('p');
+		hint.innerHTML = '<strong>How to use:</strong><br/>1. Open a note<br/>2. Run command: <code>Start recording in this note</code><br/>3. Recording begins automatically';
+		hint.style.color = 'var(--text-muted)';
+		hint.style.fontSize = '0.9em';
+		hint.style.lineHeight = '1.5';
 	}
 
 	private renderRecording(): void {
 		const { containerEl } = this;
 
 		const content = containerEl.createDiv('content');
-		content.createEl('h3', { text: 'Recording...' });
 
-		// Timer
+		// Timer (smaller, more discrete)
 		const timerEl = content.createDiv('timer');
 		timerEl.textContent = '00:00:00';
-
-		// Canvas for waveform
-		const canvasEl = content.createEl('canvas', { attr: { width: '300', height: '100' } });
-		canvasEl.addClass('waveform');
-		this.canvasContext = canvasEl.getContext('2d');
+		timerEl.addClass('timer-compact');
 
 		// Stop button
 		const buttonGroup = content.createDiv('button-group');
@@ -183,9 +149,8 @@ export class RecordingView extends ItemView {
 		const notesList = content.createDiv('notes-list');
 		notesList.id = 'notes-list';
 
-		// Update timer and waveform
+		// Update timer
 		this.updateTimer(timerEl);
-		this.animateWaveform(canvasEl);
 
 		// Auto-focus the note input
 		noteInput.focus();
@@ -240,6 +205,7 @@ export class RecordingView extends ItemView {
 			audioBlob: null,
 			segments: [],
 			summary: null,
+			apiCosts: [],
 		};
 
 		this.recorder = new AudioRecorder();
@@ -290,6 +256,14 @@ export class RecordingView extends ItemView {
 			this.updateStatus('Transcribing...');
 			this.session.segments = await assemblyAiClient.transcribeAudio(this.session.audioBlob);
 
+			// Track AssemblyAI costs
+			const aaiCost = assemblyAiClient.calculateTranscriptionCost(this.session.segments);
+			this.session.apiCosts.push({
+				service: 'assemblyai',
+				amount: aaiCost,
+				description: `Audio transcription (${this.session.segments.length} segments)`,
+			});
+
 			this.updateStatus('Summarizing...');
 			const summarizer = new Summarizer(
 				this.plugin.settings.openAiApiKey,
@@ -297,12 +271,29 @@ export class RecordingView extends ItemView {
 				this.plugin.settings.temperature
 			);
 
+			const transcript = this.session.segments.map(s => s.text).join(' ');
+			const notesText = this.session.notes.map(n => n.text).join(' ');
+			const totalInputLength = transcript.length + notesText.length;
+
+			// Rough token estimation: ~4 characters per token
+			const estimatedInputTokens = Math.ceil(totalInputLength / 4);
+			// Summary is typically 30-50% of input size
+			const estimatedOutputTokens = Math.ceil(estimatedInputTokens * 0.4);
+
 			this.session.summary = await summarizer.summarize(
 				this.session.segments,
 				this.session.notes,
 				this.session.sessionType,
 				this.plugin.settings.summaryVerbosity
 			);
+
+			// Track OpenAI costs
+			const openaiCost = summarizer.estimateCost(estimatedInputTokens, estimatedOutputTokens);
+			this.session.apiCosts.push({
+				service: 'openai',
+				amount: openaiCost,
+				description: `Summary generation (~${estimatedInputTokens}K input, ~${estimatedOutputTokens}K output tokens)`,
+			});
 
 			this.updateStatus('Saving files...');
 			await this.saveOutput();
@@ -374,41 +365,6 @@ export class RecordingView extends ItemView {
 		this.plugin.registerInterval(this.timerInterval);
 	}
 
-	private animateWaveform(canvas: HTMLCanvasElement): void {
-		const ctx = this.canvasContext;
-		if (!ctx || !this.recorder) return;
-
-		const analyser = this.recorder.getAnalyserNode();
-		if (!analyser) return;
-
-		const bufferLength = analyser.frequencyBinCount;
-		const dataArray = new Uint8Array(bufferLength);
-		const canvasWidth = (canvas as any).width || 0;
-		const canvasHeight = (canvas as any).height || 0;
-		const context = ctx; // Store ctx as context to avoid closure issues
-
-		const draw = () => {
-			analyser!.getByteFrequencyData(dataArray);
-
-			context.fillStyle = 'rgb(255, 255, 255)';
-			context.fillRect(0, 0, canvasWidth, canvasHeight);
-
-			context.fillStyle = 'rgb(100, 150, 200)';
-			const barWidth = (canvasWidth / bufferLength) * 2.5;
-			let barHeight = 0;
-			let x = 0;
-
-			for (let i = 0; i < bufferLength; i++) {
-				barHeight = ((dataArray[i] || 0) / 255) * canvasHeight;
-				context.fillRect(x, canvasHeight - barHeight, barWidth, barHeight);
-				x += barWidth + 1;
-			}
-
-			this.animationFrame = requestAnimationFrame(draw);
-		};
-
-		draw();
-	}
 
 
 	private addNote(text: string): void {

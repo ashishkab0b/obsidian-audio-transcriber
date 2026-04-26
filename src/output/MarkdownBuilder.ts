@@ -87,7 +87,18 @@ export class MarkdownBuilder {
 		markdown += `[[${transcriptPath}]]\n\n`;
 
 		markdown += '## Linked Audio\n';
-		markdown += `![[${audioPath}]]\n`;
+		markdown += `![[${audioPath}]]\n\n`;
+
+		// Add API costs section
+		if (session.apiCosts && session.apiCosts.length > 0) {
+			markdown += '## Processing Costs\n';
+			let totalCost = 0;
+			session.apiCosts.forEach((cost) => {
+				markdown += `- ${cost.service.toUpperCase()}: $${cost.amount.toFixed(4)} — ${cost.description}\n`;
+				totalCost += cost.amount;
+			});
+			markdown += `\n**Total Cost:** $${totalCost.toFixed(4)}\n`;
+		}
 
 		return markdown;
 	}
