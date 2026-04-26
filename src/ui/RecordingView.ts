@@ -264,6 +264,18 @@ export class RecordingView extends ItemView {
 
 		try {
 			const audioBlob = await this.recorder.stop();
+
+			// Check if audio blob has meaningful content
+			// A silent recording produces a very small blob (just headers)
+			// Minimum threshold is 10KB to ensure actual audio data
+			if (audioBlob.size < 10240) {
+				alert('No audio detected. Please record some audio before stopping.');
+				this.state = 'idle';
+				this.session = null;
+				this.render();
+				return;
+			}
+
 			this.session.audioBlob = audioBlob;
 
 			this.state = 'processing';
@@ -289,6 +301,15 @@ export class RecordingView extends ItemView {
 
 			this.updateStatus('Transcribing...');
 			this.session.segments = await assemblyAiClient.transcribeAudio(this.session.audioBlob);
+
+			// Check if any speech was detected
+			if (!this.session.segments || this.session.segments.length === 0) {
+				alert('No speech detected in the audio. Please try recording again with clear audio.');
+				this.state = 'idle';
+				this.session = null;
+				this.render();
+				return;
+			}
 
 			// Track AssemblyAI costs
 			const aaiCost = assemblyAiClient.calculateTranscriptionCost(this.session.segments);
