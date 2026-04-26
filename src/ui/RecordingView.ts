@@ -6,7 +6,7 @@ import { AssemblyAIClient } from '../api/assemblyai';
 import { Summarizer } from '../api/summarizer';
 import { NoteWriter } from '../output/NoteWriter';
 import { MarkdownBuilder } from '../output/MarkdownBuilder';
-import { MEETING_MODELS, computeCost } from '../config/models';
+import { MEETING_MODELS, TALK_MODELS, computeCost } from '../config/models';
 
 export const RECORDING_VIEW_TYPE = 'audio-transcriber-view';
 
@@ -319,61 +319,105 @@ export class RecordingView extends ItemView {
 				amount: aaiCost,
 			});
 
-			this.updateStatus('Generating outline and extracting action items...');
 			const summarizer = new Summarizer(
 				this.plugin.settings.openAiApiKey,
 				this.plugin.settings.temperature
 			);
 
-			// Step 1: Parallel - outline and action items
-			const [outlineResult, actionItemsResult] = await Promise.all([
-				summarizer.generateOutline(this.session.segments, this.session.notes, this.plugin.settings.summaryVerbosity),
-				summarizer.extractActionItems(this.session.segments, this.session.notes),
-			]);
+			if (this.session.sessionType === 'meeting') {
+				// MEETING PIPELINE: outline + action items (parallel), then executive summary
+				this.updateStatus('Generating outline and extracting action items...');
 
-			// Step 2: Sequential - executive summary from outline
-			this.updateStatus('Writing executive summary...');
-			const summaryResult = await summarizer.generateExecutiveSummary(
-				outlineResult.data.outline,
-				this.plugin.settings.summaryVerbosity
-			);
+				const [outlineResult, actionItemsResult] = await Promise.all([
+					summarizer.generateOutline(this.session.segments, this.session.notes, this.plugin.settings.summaryVerbosity),
+					summarizer.extractActionItems(this.session.segments, this.session.notes),
+				]);
 
-			// Assemble final summary result
-			this.session.summary = {
-				summary: summaryResult.data.summary,
-				outline: outlineResult.data.outline,
-				decisions: actionItemsResult.data.decisions,
-				actionItems: actionItemsResult.data.actionItems,
-				takeaways: [],
-			};
+				this.updateStatus('Writing executive summary...');
+				const summaryResult = await summarizer.generateExecutiveSummary(
+					outlineResult.data.outline,
+					this.plugin.settings.summaryVerbosity
+				);
 
-			// Track per-component OpenAI costs with actual token usage
-			this.session.apiCosts.push(
-				{
-					service: 'openai',
-					component: 'Outline',
-					model: MEETING_MODELS.outline,
-					amount: computeCost(MEETING_MODELS.outline, outlineResult.promptTokens, outlineResult.completionTokens),
-					promptTokens: outlineResult.promptTokens,
-					completionTokens: outlineResult.completionTokens,
-				},
-				{
-					service: 'openai',
-					component: 'Action Items',
-					model: MEETING_MODELS.actionItems,
-					amount: computeCost(MEETING_MODELS.actionItems, actionItemsResult.promptTokens, actionItemsResult.completionTokens),
-					promptTokens: actionItemsResult.promptTokens,
-					completionTokens: actionItemsResult.completionTokens,
-				},
-				{
-					service: 'openai',
-					component: 'Executive Summary',
-					model: MEETING_MODELS.executiveSummary,
-					amount: computeCost(MEETING_MODELS.executiveSummary, summaryResult.promptTokens, summaryResult.completionTokens),
-					promptTokens: summaryResult.promptTokens,
-					completionTokens: summaryResult.completionTokens,
-				}
-			);
+				this.session.summary = {
+					summary: summaryResult.data.summary,
+					outline: outlineResult.data.outline,
+					decisions: actionItemsResult.data.decisions,
+					actionItems: actionItemsResult.data.actionItems,
+					takeaways: [],
+				};
+
+				// Track per-component costs for meeting
+				this.session.apiCosts.push(
+					{
+						service: 'openai',
+						component: 'Outline',
+						model: MEETING_MODELS.outline,
+						amount: computeCost(MEETING_MODELS.outline, outlineResult.promptTokens, outlineResult.completionTokens),
+						promptTokens: outlineResult.promptTokens,
+						completionTokens: outlineResult.completionTokens,
+					},
+					{
+						service: 'openai',
+						component: 'Action Items',
+						model: MEETING_MODELS.actionItems,
+						amount: computeCost(MEETING_MODELS.actionItems, actionItemsResult.promptTokens, actionItemsResult.completionTokens),
+						promptTokens: actionItemsResult.promptTokens,
+						completionTokens: actionItemsResult.completionTokens,
+					},
+					{
+						service: 'openai',
+						component: 'Executive Summary',
+						model: MEETING_MODELS.executiveSummary,
+						amount: computeCost(MEETING_MODELS.executiveSummary, summaryResult.promptTokens, summaryResult.completionTokens),
+						promptTokens: summaryResult.promptTokens,
+						completionTokens: summaryResult.completionTokens,
+					}
+				);
+			} else {
+				// TALK PIPELINE: outline, then executive summary with takeaways
+				this.updateStatus('Generating outline...');
+
+				const outlineResult = await summarizer.generateTalkOutline(
+					this.session.segments,
+					this.session.notes,
+					this.plugin.settings.summaryVerbosity
+				);
+
+				this.updateStatus('Writing executive summary and extracting takeaways...');
+				const summaryResult = await summarizer.generateTalkExecutiveSummary(
+					outlineResult.data.outline,
+					this.plugin.settings.summaryVerbosity
+				);
+
+				this.session.summary = {
+					summary: summaryResult.data.summary,
+					outline: outlineResult.data.outline,
+					decisions: [],
+					actionItems: [],
+					takeaways: summaryResult.data.takeaways,
+				};
+
+				// Track per-component costs for talk
+				this.session.apiCosts.push(
+					{
+						service: 'openai',
+						component: 'Outline',
+						model: TALK_MODELS.outline,
+						amount: computeCost(TALK_MODELS.outline, outlineResult.promptTokens, outlineResult.completionTokens),
+						promptTokens: outlineResult.promptTokens,
+						completionTokens: outlineResult.completionTokens,
+					},
+					{
+						service: 'openai',
+						component: 'Executive Summary',
+						model: TALK_MODELS.executiveSummary,
+						amount: computeCost(TALK_MODELS.executiveSummary, summaryResult.promptTokens, summaryResult.completionTokens),
+						promptTokens: summaryResult.promptTokens,
+						completionTokens: summaryResult.completionTokens,
+					}
+				);
+			}
 
 			this.updateStatus('Saving files...');
 			await this.saveOutput();

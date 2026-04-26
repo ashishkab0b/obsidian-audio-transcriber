@@ -9,23 +9,40 @@ export function registerCommands(plugin: Plugin): void {
 	});
 
 	plugin.addCommand({
-		id: 'start-recording-in-note',
-		name: 'Start recording in this note',
+		id: 'start-meeting-in-note',
+		name: 'Start meeting recording in this note',
 		editorCallback: (editor, view: MarkdownView) => {
 			if (!view.file) {
 				alert('Cannot determine note file');
 				return;
 			}
-			// First activate the view
 			activateView(plugin).then(() => {
-				// Get the recorder view from the leaves (not active view, since focus might not be there yet)
 				const leaves = plugin.app.workspace.getLeavesOfType(RECORDING_VIEW_TYPE);
 				const firstLeaf = leaves[0];
 				if (firstLeaf && firstLeaf.view) {
 					const recorderView = firstLeaf.view as RecordingView;
 					recorderView.setTargetNote(view.file);
-					// Automatically start recording with "meeting" as default session type
 					recorderView.startRecordingWithSessionType('meeting');
+				}
+			});
+		},
+	});
+
+	plugin.addCommand({
+		id: 'start-talk-in-note',
+		name: 'Start talk recording in this note',
+		editorCallback: (editor, view: MarkdownView) => {
+			if (!view.file) {
+				alert('Cannot determine note file');
+				return;
+			}
+			activateView(plugin).then(() => {
+				const leaves = plugin.app.workspace.getLeavesOfType(RECORDING_VIEW_TYPE);
+				const firstLeaf = leaves[0];
+				if (firstLeaf && firstLeaf.view) {
+					const recorderView = firstLeaf.view as RecordingView;
+					recorderView.setTargetNote(view.file);
+					recorderView.startRecordingWithSessionType('lecture');
 				}
 			});
 		},

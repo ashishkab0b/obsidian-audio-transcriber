@@ -6,6 +6,11 @@ export const MEETING_MODELS = {
 	executiveSummary: 'gpt-5.4-mini',
 } as const;
 
+export const TALK_MODELS = {
+	outline: 'gpt-5.4',
+	executiveSummary: 'gpt-5.4-mini',
+} as const;
+
 // Pricing per 1K tokens (input, output)
 // Update these when OpenAI publishes or changes pricing
 export const MODEL_PRICING: Record<string, { input: number; output: number }> = {

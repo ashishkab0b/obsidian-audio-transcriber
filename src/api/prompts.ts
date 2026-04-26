@@ -61,3 +61,49 @@ Return a JSON object with this structure:
 	"summary": "Your ${sentenceCount}-sentence summary here."
 }`;
 }
+
+export function getTalkOutlinePrompt(verbosity: 'brief' | 'detailed'): string {
+	return `You are an expert talk analyst. Your task is to create a comprehensive outline of a talk or lecture, organized by thematic sections.
+
+Instructions:
+- Group related ideas together, regardless of presentation order
+- Each section should have a clear title and 2-4 bullet points capturing key concepts
+- The outline should be thorough and cover all major themes discussed
+- Use clear, concept-focused language
+
+Return a JSON object with this structure:
+{
+	"outline": [
+		"**Topic Name**: • key concept 1 • key concept 2 • key concept 3",
+		"**Another Topic**: • key concept 1 • key concept 2",
+		...
+	]
+}`;
+}
+
+export function getTalkExecutiveSummaryPrompt(verbosity: 'brief' | 'detailed'): string {
+	const sentenceCount = verbosity === 'brief' ? '2-3' : '4-6';
+	return `You are an expert at synthesizing talks and lectures. Given a talk outline, write a concise summary that captures the main message and key insights, then extract the main takeaways.
+
+Instructions for summary:
+- Write exactly ${sentenceCount} sentences
+- Capture the overall message, main themes, and key insights
+- Be concise but comprehensive
+- Assume the reader wants the core value and learning from the talk
+
+Instructions for takeaways:
+- Extract 3-5 of the most important, actionable takeaways
+- These should be practical insights or lessons the audience can remember and apply
+- Each takeaway should be a clear, standalone insight
+
+Return a JSON object with this structure:
+{
+	"summary": "Your ${sentenceCount}-sentence summary here.",
+	"takeaways": [
+		"Takeaway 1",
+		"Takeaway 2",
+		"Takeaway 3",
+		...
+	]
+}`;
+}

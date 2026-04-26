@@ -3,8 +3,10 @@ import {
 	getMeetingOutlinePrompt,
 	getMeetingActionItemsPrompt,
 	getMeetingExecutiveSummaryPrompt,
+	getTalkOutlinePrompt,
+	getTalkExecutiveSummaryPrompt,
 } from './prompts';
-import { MEETING_MODELS, computeCost } from '../config/models';
+import { MEETING_MODELS, TALK_MODELS, computeCost } from '../config/models';
 
 interface OpenAIMessage {
 	role: 'system' | 'user' | 'assistant';
@@ -108,6 +110,55 @@ export class Summarizer {
 
 		return {
 			data: { summary },
+			promptTokens: response.promptTokens,
+			completionTokens: response.completionTokens,
+		};
+	}
+
+	async generateTalkOutline(
+		segments: DiarizedSegment[],
+		notes: TimestampedNote[],
+		verbosity: 'brief' | 'detailed'
+	): Promise<ComponentResult<{ outline: string[] }>> {
+		const transcript = this.formatTranscript(segments);
+		const notesText = this.formatNotes(notes);
+		const systemPrompt = getTalkOutlinePrompt(verbosity);
+		const userPrompt = `${transcript}\n\nUser notes during recording:\n${notesText}`;
+
+		const messages: OpenAIMessage[] = [
+			{ role: 'system', content: systemPrompt },
+			{ role: 'user', content: userPrompt },
+		];
+
+		const response = await this.callOpenAI(TALK_MODELS.outline, messages);
+		const outline = response.data.outline;
+
+		return {
+			data: { outline },
+			promptTokens: response.promptTokens,
+			completionTokens: response.completionTokens,
+		};
+	}
+
+	async generateTalkExecutiveSummary(
+		outline: string[],
+		verbosity: 'brief' | 'detailed'
+	): Promise<ComponentResult<{ summary: string; takeaways: string[] }>> {
+		const systemPrompt = getTalkExecutiveSummaryPrompt(verbosity);
+		const outlineText = outline.join('\n');
+		const userPrompt = `Here is the talk outline:\n\n${outlineText}`;
+
+		const messages: OpenAIMessage[] = [
+			{ role: 'system', content: systemPrompt },
+			{ role: 'user', content: userPrompt },
+		];
+
+		const response = await this.callOpenAI(TALK_MODELS.executiveSummary, messages);
+		const summary = response.data.summary;
+		const takeaways = response.data.takeaways || [];
+
+		return {
+			data: { summary, takeaways },
 			promptTokens: response.promptTokens,
 			completionTokens: response.completionTokens,
 		};
