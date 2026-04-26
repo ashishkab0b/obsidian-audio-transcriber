@@ -151,3 +151,40 @@
 		transform: rotate(360deg);
 	}
 }
+
+.audio-recorder-view .costs-section {
+	padding: 0.75rem;
+	background-color: var(--background-secondary);
+	border-radius: 4px;
+	margin: 1rem 0;
+}
+
+.audio-recorder-view .costs-section h4 {
+	margin: 0 0 0.5rem 0;
+	font-size: 0.95rem;
+}
+
+.audio-recorder-view .cost-line {
+	display: flex;
+	justify-content: space-between;
+	padding: 0.4rem 0;
+	font-size: 0.9rem;
+	color: var(--text-muted);
+}
+
+.audio-recorder-view .cost-service {
+	font-weight: 500;
+}
+
+.audio-recorder-view .cost-amount {
+	font-family: 'Courier New', monospace;
+	color: var(--text-normal);
+}
+
+.audio-recorder-view .cost-total {
+	padding-top: 0.5rem;
+	margin-top: 0.5rem;
+	border-top: 1px solid var(--background-modifier-border);
+	font-size: 0.95rem;
+	color: var(--text-normal);
+}

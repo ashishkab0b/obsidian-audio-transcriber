@@ -178,6 +178,25 @@ export class RecordingView extends ItemView {
 		const message = content.createEl('p');
 		message.textContent = 'Your recording has been processed and saved into your note.';
 
+		// Display API costs if available
+		if (this.session && this.session.apiCosts && this.session.apiCosts.length > 0) {
+			const costsSection = content.createDiv('costs-section');
+			costsSection.createEl('h4', { text: 'Processing Costs' });
+
+			let totalCost = 0;
+			this.session.apiCosts.forEach((cost) => {
+				const costLine = costsSection.createDiv('cost-line');
+				const service = costLine.createSpan('cost-service');
+				service.textContent = `${cost.service.toUpperCase()}:`;
+				const amount = costLine.createSpan('cost-amount');
+				amount.textContent = `$${cost.amount.toFixed(4)}`;
+				totalCost += cost.amount;
+			});
+
+			const totalLine = costsSection.createDiv('cost-total');
+			totalLine.createEl('strong', { text: `Total: $${totalCost.toFixed(4)}` });
+		}
+
 		const buttons = content.createDiv('button-group');
 		const resetBtn = buttons.createEl('button', { text: 'New Recording' });
 		resetBtn.type = 'button';
