@@ -209,6 +209,18 @@ export class RecordingView extends ItemView {
 	}
 
 	private async startRecording(sessionType: SessionType): Promise<void> {
+		// If in done or processing state, reset to idle first
+		if (this.state === 'done' || this.state === 'processing') {
+			this.state = 'idle';
+			this.session = null;
+		}
+
+		// Prevent starting if already recording
+		if (this.state === 'recording') {
+			alert('Recording already in progress. Stop the current recording first.');
+			return;
+		}
+
 		if (!this.targetNoteFile) {
 			console.error('No target note set');
 			alert('Use command "Start recording in this note" from within a note to begin');
