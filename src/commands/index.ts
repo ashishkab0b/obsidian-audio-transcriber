@@ -37,8 +37,8 @@ export function registerCommands(plugin: Plugin): void {
 		hotkeys: [{ modifiers: ['Ctrl', 'Shift'], key: 'n' }],
 		callback: () => {
 			const view = plugin.app.workspace.getActiveViewOfType(RecordingView);
-			if (view && (view as any).openNoteModal) {
-				(view as any).openNoteModal();
+			if (view) {
+				view.focusNoteInput();
 			}
 		},
 	});

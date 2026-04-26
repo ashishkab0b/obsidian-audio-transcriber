@@ -6,7 +6,6 @@ import { AssemblyAIClient } from '../api/assemblyai';
 import { Summarizer } from '../api/summarizer';
 import { NoteWriter } from '../output/NoteWriter';
 import { MarkdownBuilder } from '../output/MarkdownBuilder';
-import { NoteModal } from './NoteModal';
 
 export const RECORDING_VIEW_TYPE = 'audio-recorder-view';
 
@@ -54,6 +53,13 @@ export class RecordingView extends ItemView {
 
 	async startRecordingWithSessionType(sessionType: SessionType = 'meeting'): Promise<void> {
 		await this.startRecording(sessionType);
+	}
+
+	focusNoteInput(): void {
+		const noteInput = this.containerEl.querySelector('.note-input') as HTMLTextAreaElement;
+		if (noteInput) {
+			noteInput.focus();
+		}
 	}
 
 	private cleanup(): void {
@@ -143,15 +149,34 @@ export class RecordingView extends ItemView {
 		canvasEl.addClass('waveform');
 		this.canvasContext = canvasEl.getContext('2d');
 
-		// Buttons
+		// Stop button
 		const buttonGroup = content.createDiv('button-group');
 		const stopBtn = buttonGroup.createEl('button', { text: '● Stop' });
 		stopBtn.type = 'button';
 		stopBtn.addEventListener('click', () => this.stopRecording());
 
-		const noteBtn = buttonGroup.createEl('button', { text: '✎ Add Note' });
-		noteBtn.type = 'button';
-		noteBtn.addEventListener('click', () => this.openNoteModal());
+		// Note input
+		const noteLabel = content.createEl('label', { text: 'Add a note' });
+		const noteInput = content.createEl('textarea', { attr: { placeholder: 'Press Enter to add note...' } });
+		noteInput.addClass('note-input');
+
+		noteInput.addEventListener('keydown', (e: KeyboardEvent) => {
+			if (e.key === 'Enter' && !e.shiftKey) {
+				e.preventDefault();
+				const text = noteInput.value.trim();
+				if (text) {
+					this.addNote(text);
+					noteInput.value = '';
+				}
+			}
+		});
+
+		noteInput.addEventListener('keydown', (e: KeyboardEvent) => {
+			// Allow Shift+Enter for multiline
+			if (e.key === 'Enter' && e.shiftKey) {
+				return;
+			}
+		});
 
 		// Notes list
 		const notesLabel = content.createEl('h4', { text: 'Notes' });
@@ -161,6 +186,9 @@ export class RecordingView extends ItemView {
 		// Update timer and waveform
 		this.updateTimer(timerEl);
 		this.animateWaveform(canvasEl);
+
+		// Auto-focus the note input
+		noteInput.focus();
 	}
 
 	private renderProcessing(): void {
@@ -382,25 +410,6 @@ export class RecordingView extends ItemView {
 		draw();
 	}
 
-	private openNoteModal(): void {
-		if (!this.recorder || !this.session) {
-			return;
-		}
-
-		const elapsed = this.recorder.getElapsedSeconds();
-		const hours = Math.floor(elapsed / 3600);
-		const minutes = Math.floor((elapsed % 3600) / 60);
-		const seconds = elapsed % 60;
-		const timeDisplay = `${hours.toString().padStart(2, '0')}:${minutes
-			.toString()
-			.padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-		const modal = new NoteModal(this.app, timeDisplay, (text: string) => {
-			this.addNote(text);
-		});
-
-		modal.open();
-	}
 
 	private addNote(text: string): void {
 		if (!this.recorder || !this.session) {
