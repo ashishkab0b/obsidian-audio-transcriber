@@ -111,6 +111,15 @@ export class RecordingView extends ItemView {
 
 		const content = containerEl.createDiv('content');
 
+		// Recording type indicator
+		if (this.session) {
+			const typeLabel = content.createEl('p');
+			typeLabel.textContent = `Recording: ${this.session.sessionType === 'meeting' ? 'Meeting' : 'Talk'}`;
+			typeLabel.style.fontWeight = 'bold';
+			typeLabel.style.marginBottom = '1rem';
+			typeLabel.style.color = 'var(--text-normal)';
+		}
+
 		// Timer (smaller, more discrete)
 		const timerEl = content.createDiv('timer');
 		timerEl.textContent = '00:00:00';
