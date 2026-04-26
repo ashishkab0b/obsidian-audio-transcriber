@@ -1,6 +1,6 @@
 {
-	"id": "obsidian-audio-recorder",
-	"name": "Audio Recorder",
+	"id": "obsidian-audio-transcriber",
+	"name": "Audio Transcriber",
 	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
 	"description": "Record audio in Obsidian, transcribe with AssemblyAI, extract decisions and action items, and generate structured summaries.",

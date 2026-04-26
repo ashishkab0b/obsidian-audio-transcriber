@@ -1,41 +1,41 @@
-.audio-recorder-view {
+.audio-transcriber-view {
 	padding: 1rem;
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
 }
 
-.audio-recorder-view .content {
+.audio-transcriber-view .content {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
 }
 
-.audio-recorder-view h3 {
+.audio-transcriber-view h3 {
 	margin: 0;
 	font-size: 1.2rem;
 }
 
-.audio-recorder-view h4 {
+.audio-transcriber-view h4 {
 	margin: 0.5rem 0 0.25rem 0;
 	font-size: 0.95rem;
 }
 
-.audio-recorder-view .form {
+.audio-transcriber-view .form {
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
 }
 
-.audio-recorder-view label {
+.audio-transcriber-view label {
 	font-weight: 600;
 	margin-bottom: 0.25rem;
 	display: block;
 }
 
-.audio-recorder-view select,
-.audio-recorder-view input,
-.audio-recorder-view textarea {
+.audio-transcriber-view select,
+.audio-transcriber-view input,
+.audio-transcriber-view textarea {
 	padding: 0.5rem;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 4px;
@@ -43,19 +43,19 @@
 	font-family: inherit;
 }
 
-.audio-recorder-view select:focus,
-.audio-recorder-view input:focus,
-.audio-recorder-view textarea:focus {
+.audio-transcriber-view select:focus,
+.audio-transcriber-view input:focus,
+.audio-transcriber-view textarea:focus {
 	outline: none;
 	border-color: var(--interactive-accent);
 }
 
-.audio-recorder-view .button-group {
+.audio-transcriber-view .button-group {
 	display: flex;
 	gap: 0.5rem;
 }
 
-.audio-recorder-view button {
+.audio-transcriber-view button {
 	flex: 1;
 	padding: 0.75rem 1rem;
 	background-color: var(--interactive-accent);
@@ -68,15 +68,15 @@
 	transition: background-color 0.2s;
 }
 
-.audio-recorder-view button:hover {
+.audio-transcriber-view button:hover {
 	background-color: var(--interactive-accent-hover);
 }
 
-.audio-recorder-view button:active {
+.audio-transcriber-view button:active {
 	background-color: var(--interactive-accent-active);
 }
 
-.audio-recorder-view .timer {
+.audio-transcriber-view .timer {
 	font-size: 1.8rem;
 	font-weight: bold;
 	font-family: 'Courier New', monospace;
@@ -86,7 +86,7 @@
 	border-radius: 4px;
 }
 
-.audio-recorder-view .timer-compact {
+.audio-transcriber-view .timer-compact {
 	font-size: 1.1rem;
 	font-weight: 600;
 	font-family: 'Courier New', monospace;
@@ -97,7 +97,7 @@
 	color: var(--text-muted);
 }
 
-.audio-recorder-view .notes-list {
+.audio-transcriber-view .notes-list {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
@@ -108,7 +108,7 @@
 	border-radius: 4px;
 }
 
-.audio-recorder-view .note-input {
+.audio-transcriber-view .note-input {
 	height: 120px;
 	resize: vertical;
 	font-size: 0.95rem;
@@ -116,7 +116,7 @@
 	line-height: 1.4;
 }
 
-.audio-recorder-view .note-item {
+.audio-transcriber-view .note-item {
 	padding: 0.5rem;
 	background-color: var(--background-primary);
 	border-left: 3px solid var(--interactive-accent);
@@ -124,7 +124,7 @@
 	word-break: break-word;
 }
 
-.audio-recorder-view .status {
+.audio-transcriber-view .status {
 	padding: 1rem;
 	background-color: var(--background-secondary);
 	border-radius: 4px;
@@ -133,7 +133,7 @@
 	color: var(--text-muted);
 }
 
-.audio-recorder-view .spinner {
+.audio-transcriber-view .spinner {
 	border: 4px solid var(--background-modifier-border);
 	border-top: 4px solid var(--interactive-accent);
 	border-radius: 50%;
@@ -152,19 +152,19 @@
 	}
 }
 
-.audio-recorder-view .costs-section {
+.audio-transcriber-view .costs-section {
 	padding: 0.75rem;
 	background-color: var(--background-secondary);
 	border-radius: 4px;
 	margin: 1rem 0;
 }
 
-.audio-recorder-view .costs-section h4 {
+.audio-transcriber-view .costs-section h4 {
 	margin: 0 0 0.5rem 0;
 	font-size: 0.95rem;
 }
 
-.audio-recorder-view .cost-line {
+.audio-transcriber-view .cost-line {
 	display: flex;
 	justify-content: space-between;
 	padding: 0.4rem 0;
@@ -172,16 +172,16 @@
 	color: var(--text-muted);
 }
 
-.audio-recorder-view .cost-service {
+.audio-transcriber-view .cost-service {
 	font-weight: 500;
 }
 
-.audio-recorder-view .cost-amount {
+.audio-transcriber-view .cost-amount {
 	font-family: 'Courier New', monospace;
 	color: var(--text-normal);
 }
 
-.audio-recorder-view .cost-total {
+.audio-transcriber-view .cost-total {
 	padding-top: 0.5rem;
 	margin-top: 0.5rem;
 	border-top: 1px solid var(--background-modifier-border);

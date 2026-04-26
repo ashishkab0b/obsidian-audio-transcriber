@@ -7,7 +7,7 @@ import { Summarizer } from '../api/summarizer';
 import { NoteWriter } from '../output/NoteWriter';
 import { MarkdownBuilder } from '../output/MarkdownBuilder';
 
-export const RECORDING_VIEW_TYPE = 'audio-recorder-view';
+export const RECORDING_VIEW_TYPE = 'audio-transcriber-view';
 
 type ViewState = 'idle' | 'recording' | 'processing' | 'done';
 
@@ -30,7 +30,7 @@ export class RecordingView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return 'Audio Recorder';
+		return 'Audio Transcriber';
 	}
 
 	getIcon(): string {
@@ -73,7 +73,7 @@ export class RecordingView extends ItemView {
 	private render(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-		containerEl.addClass('audio-recorder-view');
+		containerEl.addClass('audio-transcriber-view');
 
 		switch (this.state) {
 			case 'idle':
@@ -96,7 +96,7 @@ export class RecordingView extends ItemView {
 
 		const content = containerEl.createDiv('content');
 
-		content.createEl('h3', { text: 'Audio Recorder' });
+		content.createEl('h3', { text: 'Audio Transcriber' });
 
 		const hint = content.createEl('p');
 		hint.innerHTML = '<strong>How to use:</strong><br/>1. Open a note<br/>2. Run command: <code>Start recording in this note</code><br/>3. Recording begins automatically';
