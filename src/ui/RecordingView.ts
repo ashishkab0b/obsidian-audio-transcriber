@@ -235,6 +235,7 @@ export class RecordingView extends ItemView {
 			notes: [],
 			audioBlob: null,
 			segments: [],
+			chapters: [],
 			summary: null,
 			apiCosts: [],
 		};
@@ -285,7 +286,9 @@ export class RecordingView extends ItemView {
 			const assemblyAiClient = new AssemblyAIClient(this.plugin.settings.assemblyAiApiKey);
 
 			this.updateStatus('Transcribing...');
-			this.session.segments = await assemblyAiClient.transcribeAudio(this.session.audioBlob);
+			const { segments, chapters } = await assemblyAiClient.transcribeAudio(this.session.audioBlob);
+			this.session.segments = segments;
+			this.session.chapters = chapters;
 
 			// Track AssemblyAI costs
 			const aaiCost = assemblyAiClient.calculateTranscriptionCost(this.session.segments);
@@ -315,7 +318,8 @@ export class RecordingView extends ItemView {
 				this.session.segments,
 				this.session.notes,
 				this.session.sessionType,
-				this.plugin.settings.summaryVerbosity
+				this.plugin.settings.summaryVerbosity,
+				this.session.chapters
 			);
 
 			// Track OpenAI costs
