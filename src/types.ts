@@ -32,21 +32,12 @@ export interface APICost {
 	description: string;
 }
 
-export interface MeetingChapter {
-	gist: string; // short title from AssemblyAI
-	headline: string; // one-sentence summary
-	summary: string; // longer summary
-	start: number; // ms
-	end: number; // ms
-}
-
 export interface RecordingSession {
 	sessionType: SessionType;
 	startTime: Date;
 	notes: TimestampedNote[];
 	audioBlob: Blob | null;
 	segments: DiarizedSegment[];
-	chapters: MeetingChapter[];
 	summary: SummaryResult | null;
 	apiCosts: APICost[];
 }

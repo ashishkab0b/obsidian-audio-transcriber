@@ -1,4 +1,4 @@
-import { DiarizedSegment, MeetingChapter } from '../types';
+import { DiarizedSegment } from '../types';
 
 interface AssemblyAIUploadResponse {
 	upload_url: string;
@@ -7,7 +7,6 @@ interface AssemblyAIUploadResponse {
 interface AssemblyAITranscriptRequest {
 	audio_url: string;
 	speaker_labels: boolean;
-	auto_chapters?: boolean;
 	speech_models?: string[];
 }
 
@@ -18,19 +17,10 @@ interface AssemblyAIUtterance {
 	end: number;
 }
 
-interface AssemblyAIChapter {
-	gist: string;
-	headline: string;
-	summary: string;
-	start: number;
-	end: number;
-}
-
 interface AssemblyAITranscriptResponse {
 	id: string;
 	status: 'submitted' | 'processing' | 'completed' | 'error';
 	utterances: AssemblyAIUtterance[];
-	chapters?: AssemblyAIChapter[];
 	error?: string;
 }
 
@@ -74,7 +64,6 @@ export class AssemblyAIClient {
 		const request: AssemblyAITranscriptRequest = {
 			audio_url: uploadUrl,
 			speaker_labels: true,
-			auto_chapters: true,
 			speech_models: ['universal-3-pro'],
 		};
 
@@ -110,9 +99,7 @@ export class AssemblyAIClient {
 		return data.id;
 	}
 
-	async pollTranscript(
-		transcriptId: string
-	): Promise<{ segments: DiarizedSegment[]; chapters: MeetingChapter[] }> {
+	async pollTranscript(transcriptId: string): Promise<DiarizedSegment[]> {
 		let attempts = 0;
 		const maxAttempts = 600; // 30 minutes with 3-second intervals
 
@@ -130,15 +117,7 @@ export class AssemblyAIClient {
 			const data: AssemblyAITranscriptResponse = await response.json();
 
 			if (data.status === 'completed') {
-				const segments = this.mapUtterancesToSegments(data.utterances || []);
-				const chapters = (data.chapters || []).map((ch) => ({
-					gist: ch.gist,
-					headline: ch.headline,
-					summary: ch.summary,
-					start: ch.start,
-					end: ch.end,
-				}));
-				return { segments, chapters };
+				return this.mapUtterancesToSegments(data.utterances || []);
 			} else if (data.status === 'error') {
 				throw new Error(`Transcription error: ${data.error}`);
 			}
@@ -171,7 +150,7 @@ export class AssemblyAIClient {
 		});
 	}
 
-	async transcribeAudio(blob: Blob): Promise<{ segments: DiarizedSegment[]; chapters: MeetingChapter[] }> {
+	async transcribeAudio(blob: Blob): Promise<DiarizedSegment[]> {
 		const uploadUrl = await this.uploadAudio(blob);
 		const transcriptId = await this.submitTranscript(uploadUrl);
 		return this.pollTranscript(transcriptId);
