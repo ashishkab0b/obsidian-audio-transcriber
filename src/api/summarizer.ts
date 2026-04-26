@@ -1,5 +1,10 @@
-import { DiarizedSegment, SessionType, SummaryResult, TimestampedNote } from '../types';
-import { getSystemPrompt } from './prompts';
+import { DiarizedSegment, SessionType, SummaryResult, TimestampedNote, ActionItem } from '../types';
+import {
+	getMeetingOutlinePrompt,
+	getMeetingActionItemsPrompt,
+	getMeetingExecutiveSummaryPrompt,
+} from './prompts';
+import { MEETING_MODELS, computeCost } from '../config/models';
 
 interface OpenAIMessage {
 	role: 'system' | 'user' | 'assistant';
@@ -12,30 +17,37 @@ interface OpenAIResponse {
 			content: string;
 		};
 	}>;
+	usage: {
+		prompt_tokens: number;
+		completion_tokens: number;
+		total_tokens: number;
+	};
+}
+
+interface ComponentResult<T> {
+	data: T;
+	promptTokens: number;
+	completionTokens: number;
 }
 
 export class Summarizer {
 	private apiKey: string;
-	private model: string;
 	private temperature: number;
 	private baseUrl = 'https://api.openai.com/v1';
 
-	constructor(apiKey: string, model: string, temperature: number) {
+	constructor(apiKey: string, temperature: number) {
 		this.apiKey = apiKey;
-		this.model = model;
 		this.temperature = temperature;
 	}
 
-	async summarize(
+	async generateOutline(
 		segments: DiarizedSegment[],
 		notes: TimestampedNote[],
-		sessionType: SessionType,
 		verbosity: 'brief' | 'detailed'
-	): Promise<SummaryResult> {
+	): Promise<ComponentResult<{ outline: string[] }>> {
 		const transcript = this.formatTranscript(segments);
 		const notesText = this.formatNotes(notes);
-
-		const systemPrompt = getSystemPrompt(sessionType, verbosity);
+		const systemPrompt = getMeetingOutlinePrompt(verbosity);
 		const userPrompt = `${transcript}\n\nUser notes during recording:\n${notesText}`;
 
 		const messages: OpenAIMessage[] = [
@@ -43,6 +55,65 @@ export class Summarizer {
 			{ role: 'user', content: userPrompt },
 		];
 
+		const response = await this.callOpenAI(MEETING_MODELS.outline, messages);
+		const outline = response.data.outline;
+
+		return {
+			data: { outline },
+			promptTokens: response.promptTokens,
+			completionTokens: response.completionTokens,
+		};
+	}
+
+	async extractActionItems(
+		segments: DiarizedSegment[],
+		notes: TimestampedNote[]
+	): Promise<ComponentResult<{ actionItems: ActionItem[]; decisions: string[] }>> {
+		const transcript = this.formatTranscript(segments);
+		const notesText = this.formatNotes(notes);
+		const systemPrompt = getMeetingActionItemsPrompt();
+		const userPrompt = `${transcript}\n\nUser notes during recording:\n${notesText}`;
+
+		const messages: OpenAIMessage[] = [
+			{ role: 'system', content: systemPrompt },
+			{ role: 'user', content: userPrompt },
+		];
+
+		const response = await this.callOpenAI(MEETING_MODELS.actionItems, messages);
+		const actionItems = response.data.actionItems || [];
+		const decisions = response.data.decisions || [];
+
+		return {
+			data: { actionItems, decisions },
+			promptTokens: response.promptTokens,
+			completionTokens: response.completionTokens,
+		};
+	}
+
+	async generateExecutiveSummary(
+		outline: string[],
+		verbosity: 'brief' | 'detailed'
+	): Promise<ComponentResult<{ summary: string }>> {
+		const systemPrompt = getMeetingExecutiveSummaryPrompt(verbosity);
+		const outlineText = outline.join('\n');
+		const userPrompt = `Here is the meeting outline:\n\n${outlineText}`;
+
+		const messages: OpenAIMessage[] = [
+			{ role: 'system', content: systemPrompt },
+			{ role: 'user', content: userPrompt },
+		];
+
+		const response = await this.callOpenAI(MEETING_MODELS.executiveSummary, messages);
+		const summary = response.data.summary;
+
+		return {
+			data: { summary },
+			promptTokens: response.promptTokens,
+			completionTokens: response.completionTokens,
+		};
+	}
+
+	private async callOpenAI(model: string, messages: OpenAIMessage[]): Promise<any> {
 		const response = await fetch(`${this.baseUrl}/chat/completions`, {
 			method: 'POST',
 			headers: {
@@ -50,7 +121,7 @@ export class Summarizer {
 				'Content-Type': 'application/json',
 			},
 			body: JSON.stringify({
-				model: this.model,
+				model,
 				messages,
 				temperature: this.temperature,
 				response_format: { type: 'json_object' },
@@ -72,38 +143,17 @@ export class Summarizer {
 
 		try {
 			const parsed = JSON.parse(content);
-			return parsed as SummaryResult;
+			return {
+				data: parsed,
+				promptTokens: data.usage.prompt_tokens,
+				completionTokens: data.usage.completion_tokens,
+			};
 		} catch (error) {
-			throw new Error(`Failed to parse summary JSON: ${content}`);
+			throw new Error(`Failed to parse API response JSON: ${content}`);
 		}
 	}
 
-	estimateCost(inputTokens: number, outputTokens: number): number {
-		// Rough estimates for various OpenAI models:
-		// gpt-4o: $0.0025 per 1K input tokens, $0.010 per 1K output tokens
-		// gpt-4-turbo: $0.01 per 1K input, $0.03 per 1K output
-		// gpt-3.5-turbo: $0.0005 per 1K input, $0.0015 per 1K output
-
-		let inputCost = 0;
-		let outputCost = 0;
-
-		if (this.model.includes('gpt-4o')) {
-			inputCost = (inputTokens / 1000) * 0.0025;
-			outputCost = (outputTokens / 1000) * 0.01;
-		} else if (this.model.includes('gpt-4-turbo')) {
-			inputCost = (inputTokens / 1000) * 0.01;
-			outputCost = (outputTokens / 1000) * 0.03;
-		} else {
-			// Default to gpt-3.5-turbo rates
-			inputCost = (inputTokens / 1000) * 0.0005;
-			outputCost = (outputTokens / 1000) * 0.0015;
-		}
-
-		return Math.round((inputCost + outputCost) * 100) / 100;
-	}
-
-
-private formatTranscript(segments: DiarizedSegment[]): string {
+	private formatTranscript(segments: DiarizedSegment[]): string {
 		const lines = segments.map((seg) => {
 			const timeStr = this.formatTime(seg.start);
 			return `[${timeStr}] ${seg.speaker}: ${seg.text}`;

@@ -4,7 +4,6 @@ import AudioRecorderPlugin from "./main";
 export interface PluginSettings {
 	assemblyAiApiKey: string;
 	openAiApiKey: string;
-	openAiModel: string;
 	temperature: number;
 	summaryVerbosity: 'brief' | 'detailed';
 	audioFolder: string;
@@ -16,7 +15,6 @@ export interface PluginSettings {
 export const DEFAULT_SETTINGS: PluginSettings = {
 	assemblyAiApiKey: '',
 	openAiApiKey: '',
-	openAiModel: 'gpt-4o',
 	temperature: 0.3,
 	summaryVerbosity: 'detailed',
 	audioFolder: 'recordings/audio',
@@ -61,19 +59,6 @@ export class AudioRecorderSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.openAiApiKey)
 					.onChange(async (value) => {
 						this.plugin.settings.openAiApiKey = value;
-						await this.plugin.saveSettings();
-					})
-			);
-
-		new Setting(containerEl)
-			.setName('OpenAI Model')
-			.setDesc('Model to use for summarization (e.g., gpt-4o, gpt-4-turbo, gpt-3.5-turbo)')
-			.addText((text) =>
-				text
-					.setPlaceholder('gpt-4o')
-					.setValue(this.plugin.settings.openAiModel)
-					.onChange(async (value) => {
-						this.plugin.settings.openAiModel = value;
 						await this.plugin.saveSettings();
 					})
 			);

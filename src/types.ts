@@ -28,8 +28,11 @@ export interface SummaryResult {
 
 export interface APICost {
 	service: 'assemblyai' | 'openai';
+	component: string; // 'Transcription', 'Outline', 'Action Items', 'Executive Summary'
+	model?: string; // e.g. 'gpt-5.4', null for assemblyai
 	amount: number; // in USD
-	description: string;
+	promptTokens?: number;
+	completionTokens?: number;
 }
 
 export interface RecordingSession {

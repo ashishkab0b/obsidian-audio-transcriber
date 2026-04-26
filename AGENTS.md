@@ -1,5 +1,9 @@
 # Obsidian community plugin
 
+## Project logistics
+ - make git commits at logical points
+ - maintain a running project log in PROJECT_LOG.md that logs key decisions and reasoning and design
+
 ## Project overview
 
 - Target: Obsidian Community Plugin (TypeScript → bundled JavaScript).
@@ -249,3 +253,4 @@ this.registerInterval(window.setInterval(() => { /* ... */ }, 1000));
 - Developer policies: https://docs.obsidian.md/Developer+policies
 - Plugin guidelines: https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines
 - Style guide: https://help.obsidian.md/style-guide
+

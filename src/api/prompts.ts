@@ -1,52 +1,63 @@
-import { SessionType } from '../types';
+export function getMeetingOutlinePrompt(verbosity: 'brief' | 'detailed'): string {
+	const sentenceCount = verbosity === 'brief' ? '2-3' : '4-6';
+	return `You are an expert meeting analyst. Your task is to create a comprehensive outline of a meeting, organized by thematic sections rather than chronological order.
 
-export function getSystemPrompt(sessionType: SessionType, verbosity: 'brief' | 'detailed'): string {
-	const verbosityLevel = verbosity === 'brief' ? '2-3' : '4-6';
+Instructions:
+- Group related topics together, regardless of when they were discussed
+- Each section should have a clear title and 2-4 bullet points capturing key discussion points
+- The outline should be thorough and cover all major discussion areas
+- Use clear, action-oriented language
 
-	if (sessionType === 'meeting') {
-		return MEETING_SYSTEM_PROMPT(verbosityLevel);
-	} else {
-		return LECTURE_SYSTEM_PROMPT(verbosityLevel);
-	}
+Return a JSON object with this structure:
+{
+	"outline": [
+		"**Topic Name**: \u2022 key point 1\u2022 key point 2\u2022 key point 3",
+		"**Another Topic**: \u2022 key point 1\u2022 key point 2",
+		...
+	]
+}`;
 }
 
-function MEETING_SYSTEM_PROMPT(verbosityLevel: string): string {
-	return `You are an expert meeting summarizer. Your task is to analyze the meeting transcript and extract key information.
+export function getMeetingActionItemsPrompt(): string {
+	return `You are an expert at extracting structured commitments from meeting transcripts. Your task is to identify all action items and decisions mentioned during the meeting.
 
-Return a JSON object with the following structure:
+Instructions for action items:
+- Extract EVERY action item, commitment, and task mentioned
+- Attribute each action item to the person who committed to it (use "Unassigned" if unclear)
+- Include deadlines/timeframes if mentioned; use "Not specified" if no deadline given
+- Be precise and specific in the task description
+
+Instructions for decisions:
+- Extract all decisions made during the meeting
+- Include context if needed for clarity
+- Do not include action items as decisions
+
+Return a JSON object with this structure:
 {
-	"summary": "A concise overview of the meeting (${verbosityLevel} sentences)",
-	"outline": ["key point 1", "key point 2", ...],
-	"decisions": ["decision 1", "decision 2", ...],
 	"actionItems": [
 		{"owner": "Name", "task": "Description", "deadline": "timeframe"},
 		...
 	],
-	"takeaways": []
+	"decisions": [
+		"Decision 1 with context",
+		"Decision 2 with context",
+		...
+	]
+}`;
 }
 
-Focus on:
-- Key decisions made
-- Action items with clear owners
-- Important discussion points
-- Next steps`;
-}
+export function getMeetingExecutiveSummaryPrompt(verbosity: 'brief' | 'detailed'): string {
+	const sentenceCount = verbosity === 'brief' ? '2-3' : '4-6';
+	return `You are an expert at writing executive summaries. Given a meeting outline, write a concise summary that captures the meeting's purpose, key outcomes, and overall direction.
 
-function LECTURE_SYSTEM_PROMPT(verbosityLevel: string): string {
-	return `You are an expert lecture/talk summarizer. Your task is to extract the main ideas and structure from the talk.
+Instructions:
+- Write exactly ${sentenceCount} sentences
+- Focus on the most important topics and outcomes
+- Be concise but comprehensive
+- Assume the reader wants to understand what happened and what matters
 
-Return a JSON object with the following structure:
+Return a JSON object with this structure:
 {
-	"summary": "A concise overview of the talk (${verbosityLevel} sentences)",
-	"outline": ["main idea 1", "main idea 2", ...],
-	"decisions": [],
-	"actionItems": [],
-	"takeaways": ["key takeaway 1", "key takeaway 2", ...]
-}
-
-Focus on:
-- Main themes and ideas
-- Key arguments and evidence
-- Learning outcomes
-- Practical applications`;
+	"summary": "Your ${sentenceCount}-sentence summary here."
+}`;
 }
