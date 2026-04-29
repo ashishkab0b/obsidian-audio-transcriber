@@ -304,9 +304,20 @@ export class RecordingView extends ItemView {
 		}
 
 		try {
+			// Retrieve API keys from secure storage
+			const assemblyAiKey = await this.plugin.getAssemblyAIApiKey();
+			const openAiKey = await this.plugin.getOpenAIApiKey();
+
+			if (!assemblyAiKey || !openAiKey) {
+				alert('API keys not configured. Please set your AssemblyAI and OpenAI API keys in settings.');
+				this.state = 'idle';
+				this.render();
+				return;
+			}
+
 			this.updateStatus('Uploading audio...');
 
-			const assemblyAiClient = new AssemblyAIClient(this.plugin.settings.assemblyAiApiKey);
+			const assemblyAiClient = new AssemblyAIClient(assemblyAiKey);
 
 			this.updateStatus('Transcribing...');
 			this.session.segments = await assemblyAiClient.transcribeAudio(this.session.audioBlob);
@@ -329,7 +340,7 @@ export class RecordingView extends ItemView {
 			});
 
 			const summarizer = new Summarizer(
-				this.plugin.settings.openAiApiKey,
+				openAiKey,
 				this.plugin.settings.temperature
 			);
 

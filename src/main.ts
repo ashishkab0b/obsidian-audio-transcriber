@@ -1,5 +1,5 @@
 import { Plugin } from 'obsidian';
-import { DEFAULT_SETTINGS, PluginSettings, AudioRecorderSettingTab } from './settings';
+import { DEFAULT_SETTINGS, PluginSettings, AudioRecorderSettingTab, SECRET_KEYS } from './settings';
 import { registerCommands } from './commands';
 import { RecordingView, RECORDING_VIEW_TYPE } from './ui/RecordingView';
 
@@ -32,6 +32,36 @@ export default class AudioRecorderPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	// Secure API key storage using Obsidian's SecretStorage
+	async getSecret(key: string): Promise<string | null> {
+		try {
+			// SecretStorage API may not be fully typed; use any to access it
+			return await (this.app.vault as any).getSecret(key) ?? null;
+		} catch (error) {
+			console.error('Failed to retrieve secret:', error);
+			return null;
+		}
+	}
+
+	async setSecret(key: string, value: string): Promise<void> {
+		try {
+			// SecretStorage API may not be fully typed; use any to access it
+			await (this.app.vault as any).setSecret(key, value);
+		} catch (error) {
+			console.error('Failed to save secret:', error);
+			throw error;
+		}
+	}
+
+	// Helper methods to get API keys
+	async getAssemblyAIApiKey(): Promise<string | null> {
+		return this.getSecret(SECRET_KEYS.ASSEMBLYAI_API_KEY);
+	}
+
+	async getOpenAIApiKey(): Promise<string | null> {
+		return this.getSecret(SECRET_KEYS.OPENAI_API_KEY);
 	}
 
 	private async activateRecordingView(): Promise<void> {
