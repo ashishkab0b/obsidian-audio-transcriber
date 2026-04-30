@@ -2,6 +2,8 @@
 
 An Obsidian plugin that records audio, transcribes it with speaker diarization via AssemblyAI, and generates structured summaries using OpenAI.
 
+This was made to emulate the meeting recording functionality in Notion.
+
 ## Features
 
 - **Audio recording** directly in the Obsidian sidebar
