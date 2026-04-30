@@ -8,9 +8,10 @@ This was made to emulate the meeting recording functionality in Notion.
 
 - **Audio recording** directly in the Obsidian sidebar
 - **Speaker diarization** — identifies who said what
-- **Two recording modes:**
+- **Three recording modes:**
   - **Meeting** — produces an outline, action items, decisions, and executive summary
   - **Talk/Lecture** — produces an outline, key takeaways, and executive summary
+  - **Transcription** — produces only a diarized transcript and linked audio
 - **Timestamped notes** — jot down notes during a recording, attached to the timeline
 - **Per-component cost tracking** — see exactly what each API call cost
 - **Markdown output** — saves diarized transcript and structured summary as notes in your vault
@@ -78,7 +79,7 @@ The build step creates `main.js`, which is the file Obsidian loads.
 
 ### API Keys
 
-This plugin requires two API keys, stored securely in Obsidian's Keychain (Settings → Keychain):
+This plugin requires an AssemblyAI key for transcription. Meeting and talk analysis also require an OpenAI key. Keys are stored securely in Obsidian's Keychain (Settings → Keychain):
 
 | Secret name | Service | Purpose |
 |---|---|---|
@@ -101,11 +102,11 @@ Keys are stored in your OS keychain (macOS Keychain, Windows Credential Manager,
 ## Usage
 
 1. Open the command palette (`Cmd/Ctrl + P`)
-2. Run **"Start meeting recording in this note"** or **"Start talk recording in this note"**
+2. Run **"Start meeting recording in this note"**, **"Start talk recording in this note"**, or **"Start transcription in this note"**
 3. The sidebar panel opens showing the recording type and elapsed time
 4. Add timestamped notes during the recording as needed
-5. Stop the recording — the plugin uploads audio to AssemblyAI for transcription, then runs the summarization pipeline
-6. When processing completes, a summary note is created in your vault with the full results and cost breakdown
+5. Stop the recording — the plugin uploads audio to AssemblyAI for transcription, then runs the selected pipeline
+6. When processing completes, the plugin saves the transcript and audio, then inserts the result into your note
 
 ## Summarization Pipeline
 
@@ -129,6 +130,13 @@ Transcript
         │
         ▼
   Executive Summary + Takeaways (gpt-5.4-mini)  ── from outline
+```
+
+### Transcription
+
+```
+Audio
+  └── Diarized transcript (AssemblyAI)
 ```
 
 ## Development

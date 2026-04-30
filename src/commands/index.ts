@@ -49,6 +49,26 @@ export function registerCommands(plugin: Plugin): void {
 	});
 
 	plugin.addCommand({
+		id: 'start-transcription-in-note',
+		name: 'Start transcription in this note',
+		editorCallback: (editor, view: MarkdownView) => {
+			if (!view.file) {
+				alert('Cannot determine note file');
+				return;
+			}
+			activateView(plugin).then(() => {
+				const leaves = plugin.app.workspace.getLeavesOfType(RECORDING_VIEW_TYPE);
+				const firstLeaf = leaves[0];
+				if (firstLeaf && firstLeaf.view) {
+					const recorderView = firstLeaf.view as RecordingView;
+					recorderView.setTargetNote(view.file);
+					recorderView.startRecordingWithSessionType('transcription');
+				}
+			});
+		},
+	});
+
+	plugin.addCommand({
 		id: 'add-note',
 		name: 'Add timestamped note',
 		hotkeys: [{ modifiers: ['Ctrl', 'Shift'], key: 'n' }],

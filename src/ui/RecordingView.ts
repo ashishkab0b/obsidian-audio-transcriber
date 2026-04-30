@@ -100,7 +100,7 @@ export class RecordingView extends ItemView {
 		content.createEl('h3', { text: 'Audio Transcriber' });
 
 		const hint = content.createEl('p');
-		hint.innerHTML = '<strong>How to use:</strong><br/>1. Open a note<br/>2. Run command: <code>Start recording in this note</code><br/>3. Recording begins automatically';
+		hint.innerHTML = '<strong>How to use:</strong><br/>1. Open a note<br/>2. Run a meeting, talk, or transcription command<br/>3. Recording begins automatically';
 		hint.style.color = 'var(--text-muted)';
 		hint.style.fontSize = '0.9em';
 		hint.style.lineHeight = '1.5';
@@ -114,7 +114,7 @@ export class RecordingView extends ItemView {
 		// Recording type indicator
 		if (this.session) {
 			const typeLabel = content.createEl('p');
-			typeLabel.textContent = `Recording: ${this.session.sessionType === 'meeting' ? 'Meeting' : 'Talk'}`;
+			typeLabel.textContent = `Recording: ${MarkdownBuilder.getSessionTypeLabel(this.session.sessionType)}`;
 			typeLabel.style.fontWeight = 'bold';
 			typeLabel.style.marginBottom = '1rem';
 			typeLabel.style.color = 'var(--text-normal)';
@@ -308,8 +308,8 @@ export class RecordingView extends ItemView {
 			const assemblyAiKey = await this.plugin.getAssemblyAIApiKey();
 			const openAiKey = await this.plugin.getOpenAIApiKey();
 
-			if (!assemblyAiKey || !openAiKey) {
-				alert('API keys not configured. Please set your AssemblyAI and OpenAI API keys in settings.');
+			if (!assemblyAiKey) {
+				alert('AssemblyAI API key not configured. Please set it in settings.');
 				this.state = 'idle';
 				this.render();
 				return;
@@ -338,6 +338,23 @@ export class RecordingView extends ItemView {
 				component: 'Transcription',
 				amount: aaiCost,
 			});
+
+			if (this.session.sessionType === 'transcription') {
+				this.session.summary = null;
+				this.updateStatus('Saving transcript...');
+				await this.saveOutput();
+
+				this.state = 'done';
+				this.render();
+				return;
+			}
+
+			if (!openAiKey) {
+				alert('OpenAI API key not configured. Please set it in settings for meeting and talk analysis.');
+				this.state = 'idle';
+				this.render();
+				return;
+			}
 
 			const summarizer = new Summarizer(
 				openAiKey,
@@ -451,8 +468,12 @@ export class RecordingView extends ItemView {
 	}
 
 	private async saveOutput(): Promise<void> {
-		if (!this.session || !this.session.audioBlob || !this.session.summary || !this.targetNoteFile) {
+		if (!this.session || !this.session.audioBlob || !this.targetNoteFile) {
 			throw new Error('Session data incomplete');
+		}
+
+		if (this.session.sessionType !== 'transcription' && !this.session.summary) {
+			throw new Error('Session summary incomplete');
 		}
 
 		const noteWriter = new NoteWriter(this.app.vault);
@@ -476,21 +497,22 @@ export class RecordingView extends ItemView {
 			transcriptContent
 		);
 
-		// Build summary (but don't save as separate file)
-		const summaryContent = MarkdownBuilder.buildSummaryNote(
-			this.session,
-			this.session.summary,
-			audioPath,
-			transcriptPath,
-			this.session.sessionType
-		);
+		const outputContent = this.session.sessionType === 'transcription'
+			? MarkdownBuilder.buildTranscriptionNote(this.session, audioPath, transcriptPath)
+			: MarkdownBuilder.buildSummaryNote(
+				this.session,
+				this.session.summary!,
+				audioPath,
+				transcriptPath,
+				this.session.sessionType
+			);
 
-		// Insert summary into the active note
+		// Insert output into the active note
 		const currentNoteContent = await this.app.vault.read(this.targetNoteFile);
-		const newContent = currentNoteContent + '\n\n' + summaryContent;
+		const newContent = currentNoteContent + '\n\n' + outputContent;
 		await this.app.vault.modify(this.targetNoteFile, newContent);
 
-		console.log('Summary inserted into note:', this.targetNoteFile.path);
+		console.log('Recording output inserted into note:', this.targetNoteFile.path);
 	}
 
 	private updateTimer(timerEl: HTMLElement): void {

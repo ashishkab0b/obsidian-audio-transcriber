@@ -1,4 +1,4 @@
-export type SessionType = 'meeting' | 'lecture';
+export type SessionType = 'meeting' | 'lecture' | 'transcription';
 
 export interface TimestampedNote {
 	time: number; // seconds from recording start

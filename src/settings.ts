@@ -39,7 +39,7 @@ export class AudioRecorderSettingTab extends PluginSettingTab {
 
 		// API Keys info
 		containerEl.createEl('h2', { text: 'API Keys' });
-		containerEl.createEl('p', { text: 'This plugin requires an AssemblyAI key and an OpenAI key. Manage them in Obsidian Settings → Keychain.' });
+		containerEl.createEl('p', { text: 'This plugin requires an AssemblyAI key for transcription. Meeting and talk analysis also require an OpenAI key. Manage them in Obsidian Settings → Keychain.' });
 		containerEl.createEl('p', { text: `Secret names: "${SECRET_KEYS.ASSEMBLYAI_API_KEY}" and "${SECRET_KEYS.OPENAI_API_KEY}"` });
 
 		// Summarization settings section

@@ -1,6 +1,16 @@
 import { DiarizedSegment, SessionType, SummaryResult, TimestampedNote, RecordingSession } from '../types';
 
 export class MarkdownBuilder {
+	static getSessionTypeLabel(sessionType: SessionType): string {
+		if (sessionType === 'meeting') {
+			return 'Meeting';
+		}
+		if (sessionType === 'lecture') {
+			return 'Talk / Lecture';
+		}
+		return 'Transcription';
+	}
+
 	static buildTranscriptNote(segments: DiarizedSegment[], notes: TimestampedNote[]): string {
 		const notesMap = new Map<number, string>();
 		notes.forEach((note) => {
@@ -35,6 +45,23 @@ export class MarkdownBuilder {
 		return markdown;
 	}
 
+	static buildTranscriptionNote(
+		session: RecordingSession,
+		audioPath: string,
+		transcriptPath: string
+	): string {
+		const date = session.startTime.toISOString().split('T')[0];
+		let markdown = `# Transcription — ${date}\n\n`;
+
+		markdown += '## Full Transcript\n';
+		markdown += `[[${transcriptPath}]]\n\n`;
+
+		markdown += '## Linked Audio\n';
+		markdown += `![[${audioPath}]]\n`;
+
+		return markdown;
+	}
+
 	static buildSummaryNote(
 		session: RecordingSession,
 		summaryResult: SummaryResult,
@@ -43,7 +70,7 @@ export class MarkdownBuilder {
 		sessionType: SessionType
 	): string {
 		const date = session.startTime.toISOString().split('T')[0];
-		const typeLabel = sessionType === 'meeting' ? 'Meeting' : 'Talk / Lecture';
+		const typeLabel = this.getSessionTypeLabel(sessionType);
 
 		let markdown = `# ${typeLabel} — ${date}\n\n`;
 
