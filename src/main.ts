@@ -34,11 +34,12 @@ export default class AudioRecorderPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	// Secure API key storage using Obsidian's SecretStorage
+	// Secure API key storage using Obsidian's SecretStorage API
 	async getSecret(key: string): Promise<string | null> {
 		try {
-			// SecretStorage API may not be fully typed; use any to access it
-			return await (this.app.vault as any).getSecret(key) ?? null;
+			// secretStorage API may not be fully typed in all versions
+			const value = await (this.app as any).secretStorage.getSecret(key);
+			return value ?? null;
 		} catch (error) {
 			console.error('Failed to retrieve secret:', error);
 			return null;
@@ -47,10 +48,20 @@ export default class AudioRecorderPlugin extends Plugin {
 
 	async setSecret(key: string, value: string): Promise<void> {
 		try {
-			// SecretStorage API may not be fully typed; use any to access it
-			await (this.app.vault as any).setSecret(key, value);
+			// secretStorage API may not be fully typed in all versions
+			await (this.app as any).secretStorage.setSecret(key, value);
 		} catch (error) {
 			console.error('Failed to save secret:', error);
+			throw error;
+		}
+	}
+
+	async deleteSecret(key: string): Promise<void> {
+		try {
+			// secretStorage API may not be fully typed in all versions
+			await (this.app as any).secretStorage.deleteSecret(key);
+		} catch (error) {
+			console.error('Failed to delete secret:', error);
 			throw error;
 		}
 	}

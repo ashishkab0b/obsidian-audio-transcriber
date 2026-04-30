@@ -21,8 +21,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 
 // Secret key names for storing in Obsidian's secure vault
 export const SECRET_KEYS = {
-	ASSEMBLYAI_API_KEY: 'obsidian-audio-transcriber-assemblyai-key',
-	OPENAI_API_KEY: 'obsidian-audio-transcriber-openai-key',
+	ASSEMBLYAI_API_KEY: 'assemblyai-api-key',
+	OPENAI_API_KEY: 'openai-api-key',
 } as const;
 
 export class AudioRecorderSettingTab extends PluginSettingTab {
@@ -37,45 +37,10 @@ export class AudioRecorderSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		// API Keys section
+		// API Keys info
 		containerEl.createEl('h2', { text: 'API Keys' });
-		containerEl.createEl('p', { text: 'API keys are stored securely in your operating system keychain and are not synced.' });
-
-		new Setting(containerEl)
-			.setName('AssemblyAI API Key')
-			.setDesc('API key for speech-to-text transcription and speaker diarization')
-			.addText((text) => {
-				text
-					.setPlaceholder('Enter your AssemblyAI API key')
-					.inputEl.type = 'password';
-				// Load current value from secrets
-				this.plugin.getSecret(SECRET_KEYS.ASSEMBLYAI_API_KEY).then((value) => {
-					if (value) text.setValue(value);
-				});
-				text.onChange(async (value) => {
-					if (value.trim()) {
-						await this.plugin.setSecret(SECRET_KEYS.ASSEMBLYAI_API_KEY, value);
-					}
-				});
-			});
-
-		new Setting(containerEl)
-			.setName('OpenAI API Key')
-			.setDesc('API key for meeting analysis (outline, action items, executive summary)')
-			.addText((text) => {
-				text
-					.setPlaceholder('Enter your OpenAI API key')
-					.inputEl.type = 'password';
-				// Load current value from secrets
-				this.plugin.getSecret(SECRET_KEYS.OPENAI_API_KEY).then((value) => {
-					if (value) text.setValue(value);
-				});
-				text.onChange(async (value) => {
-					if (value.trim()) {
-						await this.plugin.setSecret(SECRET_KEYS.OPENAI_API_KEY, value);
-					}
-				});
-			});
+		containerEl.createEl('p', { text: 'This plugin requires an AssemblyAI key and an OpenAI key. Manage them in Obsidian Settings → Keychain.' });
+		containerEl.createEl('p', { text: `Secret names: "${SECRET_KEYS.ASSEMBLYAI_API_KEY}" and "${SECRET_KEYS.OPENAI_API_KEY}"` });
 
 		// Summarization settings section
 		containerEl.createEl('h2', { text: 'Summarization' });
