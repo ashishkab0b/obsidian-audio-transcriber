@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
-	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"name": "obsidian-audio-transcriber",
+	"version": "0.1.0",
+	"description": "Record audio in Obsidian, transcribe it with AssemblyAI, and generate structured summaries with OpenAI.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {

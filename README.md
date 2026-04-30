@@ -17,6 +17,31 @@ This was made to emulate the meeting recording functionality in Notion.
 
 ## Setup
 
+### Install from GitHub
+
+Obsidian cannot load this plugin from the source files alone. It must have the built release files at the top level of the plugin folder:
+
+- `manifest.json`
+- `main.js`
+- `styles.css`
+
+For normal use, download those files from the GitHub release for the plugin version and place them in:
+
+```text
+<Vault>/.obsidian/plugins/obsidian-audio-transcriber/
+```
+
+Then reload Obsidian and enable **Audio Transcriber** in **Settings -> Community plugins**.
+
+If you clone or download the source repo directly into a vault, run this first in the plugin folder:
+
+```bash
+npm install
+npm run build
+```
+
+That creates the missing `main.js` file Obsidian loads.
+
 ### API Keys
 
 This plugin requires two API keys, stored securely in Obsidian's Keychain (Settings → Keychain):

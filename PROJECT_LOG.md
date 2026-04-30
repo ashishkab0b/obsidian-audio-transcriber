@@ -34,6 +34,18 @@ Rather than a single API call that produces all outputs, split into specialized 
 
 ## Session Timeline
 
+### Phase 5: GitHub install/load failure diagnosis ✅
+- Diagnosed the likely real-vault load failure after installing from GitHub source: Obsidian requires `main.js` at the plugin root, but `main.js` is intentionally ignored and is not present when cloning/downloading source.
+- Added README install guidance explaining that source installs must run `npm install` and `npm run build`, while normal installs should use release assets (`manifest.json`, `main.js`, `styles.css`).
+- Added `.github/workflows/release.yml` to build production `main.js`, validate `manifest.json`/`versions.json`, and attach Obsidian release assets to GitHub releases.
+- Aligned metadata:
+  - `package.json` / `package-lock.json`: `obsidian-audio-transcriber@0.1.0`
+  - `manifest.json`: `minAppVersion` set to `1.11.0` for Keychain/SecretStorage support
+  - `versions.json`: maps `0.1.0` to `1.11.0`
+- Validation:
+  - `npm run build` passes.
+  - `npm run lint` still fails on existing policy/style issues unrelated to the load failure, including `fetch` usage, `alert`, unsafe `any`, default hotkeys, and direct DOM styling.
+
 ### Phase 1: Long-Meeting Robustness (Explored, Then Reverted)
 - **Explored**: Chapter-based map-reduce to handle 4+ hour meetings gracefully
 - **Decision**: Reverted to single-pass for real-world testing. User indicated they never have 4-hour meetings, so complexity wasn't justified yet.
