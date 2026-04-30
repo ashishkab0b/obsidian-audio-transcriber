@@ -17,30 +17,64 @@ This was made to emulate the meeting recording functionality in Notion.
 
 ## Setup
 
-### Install from GitHub
+### Install
 
-Obsidian cannot load this plugin from the source files alone. It must have the built release files at the top level of the plugin folder:
+Obsidian cannot load this plugin from TypeScript source files alone. It must have the built plugin files at the top level of the plugin folder:
 
 - `manifest.json`
 - `main.js`
 - `styles.css`
 
-For normal use, download those files from the GitHub release for the plugin version and place them in:
+#### Option 1: Install from a GitHub release
+
+Use this option when the repo has a published release.
+
+1. Open the repo's **Releases** page on GitHub.
+2. Download these release assets:
+   - `manifest.json`
+   - `main.js`
+   - `styles.css`
+3. Create this folder in your Obsidian vault:
 
 ```text
 <Vault>/.obsidian/plugins/obsidian-audio-transcriber/
 ```
 
-Then reload Obsidian and enable **Audio Transcriber** in **Settings -> Community plugins**.
+4. Put the downloaded files directly in that folder:
 
-If you clone or download the source repo directly into a vault, run this first in the plugin folder:
+```text
+<Vault>/.obsidian/plugins/obsidian-audio-transcriber/
+  manifest.json
+  main.js
+  styles.css
+```
+
+5. Restart Obsidian or reload the app.
+6. Enable **Audio Transcriber** in **Settings -> Community plugins**.
+
+Do not use GitHub's green **Code -> Download ZIP** button for this option. That downloads the source repo, not the built plugin release.
+
+#### Option 2: Install from source
+
+Use this option if there is no GitHub release yet, or if you cloned/downloaded the source repo directly into your vault.
+
+1. Put the repo in your vault plugin folder:
+
+```text
+<Vault>/.obsidian/plugins/obsidian-audio-transcriber/
+```
+
+2. Open a terminal in that folder and run:
 
 ```bash
 npm install
 npm run build
 ```
 
-That creates the missing `main.js` file Obsidian loads.
+3. Restart Obsidian or reload the app.
+4. Enable **Audio Transcriber** in **Settings -> Community plugins**.
+
+The build step creates `main.js`, which is the file Obsidian loads.
 
 ### API Keys
 

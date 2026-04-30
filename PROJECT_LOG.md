@@ -37,6 +37,7 @@ Rather than a single API call that produces all outputs, split into specialized 
 ### Phase 5: GitHub install/load failure diagnosis ✅
 - Diagnosed the likely real-vault load failure after installing from GitHub source: Obsidian requires `main.js` at the plugin root, but `main.js` is intentionally ignored and is not present when cloning/downloading source.
 - Added README install guidance explaining that source installs must run `npm install` and `npm run build`, while normal installs should use release assets (`manifest.json`, `main.js`, `styles.css`).
+- Expanded README install guidance into two explicit paths: GitHub release asset install and source install when no release exists yet.
 - Added `.github/workflows/release.yml` to build production `main.js`, validate `manifest.json`/`versions.json`, and attach Obsidian release assets to GitHub releases.
 - Aligned metadata:
   - `package.json` / `package-lock.json`: `obsidian-audio-transcriber@0.1.0`
