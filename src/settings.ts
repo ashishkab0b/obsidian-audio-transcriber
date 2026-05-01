@@ -15,7 +15,7 @@ export interface PluginSettings {
 export const DEFAULT_SETTINGS: PluginSettings = {
 	temperature: 0.3,
 	summaryVerbosity: 'detailed',
-	transcriptionModel: 'universal-2',
+	transcriptionModel: 'universal-3-pro',
 	audioFolder: 'recordings/audio',
 	transcriptFolder: 'recordings/transcripts',
 	notesFolder: 'recordings',

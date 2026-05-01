@@ -92,7 +92,7 @@ Keys are stored in your OS keychain (macOS Keychain, Windows Credential Manager,
 
 | Setting | Description | Default |
 |---|---|---|
-| AssemblyAI model | Transcription model. Universal-2 is cheaper; Universal-3 Pro can improve accuracy for harder audio. | Universal-2 |
+| AssemblyAI model | Transcription model. Universal-3 Pro can improve accuracy for harder audio; Universal-2 is cheaper. | Universal-3 Pro |
 | Temperature | Controls randomness in analysis (0.0–1.0) | 0.3 |
 | Summary Length | Brief (2–3 sentences) or Detailed (4–6 sentences) | Detailed |
 | Audio Folder | Where to save recordings | `recordings/audio` |

@@ -36,7 +36,7 @@ export class AssemblyAIClient {
 	private baseUrl = 'https://api.assemblyai.com/v2';
 	private transcriptionModel: TranscriptionModel;
 
-	constructor(apiKey: string, transcriptionModel: TranscriptionModel = 'universal-2') {
+	constructor(apiKey: string, transcriptionModel: TranscriptionModel = 'universal-3-pro') {
 		this.apiKey = apiKey;
 		this.transcriptionModel = transcriptionModel;
 	}
