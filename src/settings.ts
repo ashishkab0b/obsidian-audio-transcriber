@@ -1,9 +1,11 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import AudioRecorderPlugin from "./main";
+import { TranscriptionModel } from "./types";
 
 export interface PluginSettings {
 	temperature: number;
 	summaryVerbosity: 'brief' | 'detailed';
+	transcriptionModel: TranscriptionModel;
 	audioFolder: string;
 	transcriptFolder: string;
 	notesFolder: string;
@@ -13,6 +15,7 @@ export interface PluginSettings {
 export const DEFAULT_SETTINGS: PluginSettings = {
 	temperature: 0.3,
 	summaryVerbosity: 'detailed',
+	transcriptionModel: 'universal-2',
 	audioFolder: 'recordings/audio',
 	transcriptFolder: 'recordings/transcripts',
 	notesFolder: 'recordings',
@@ -41,6 +44,23 @@ export class AudioRecorderSettingTab extends PluginSettingTab {
 		containerEl.createEl('h2', { text: 'API Keys' });
 		containerEl.createEl('p', { text: 'This plugin requires an AssemblyAI key for transcription. Meeting and talk analysis also require an OpenAI key. Manage them in Obsidian Settings → Keychain.' });
 		containerEl.createEl('p', { text: `Secret names: "${SECRET_KEYS.ASSEMBLYAI_API_KEY}" and "${SECRET_KEYS.OPENAI_API_KEY}"` });
+
+		// Transcription settings section
+		containerEl.createEl('h2', { text: 'Transcription' });
+
+		new Setting(containerEl)
+			.setName('AssemblyAI model')
+			.setDesc('Universal-2 is cheaper. Universal-3 Pro can improve accuracy for harder audio.')
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption('universal-2', 'Universal-2')
+					.addOption('universal-3-pro', 'Universal-3 Pro')
+					.setValue(this.plugin.settings.transcriptionModel)
+					.onChange(async (value) => {
+						this.plugin.settings.transcriptionModel = value as TranscriptionModel;
+						await this.plugin.saveSettings();
+					})
+			);
 
 		// Summarization settings section
 		containerEl.createEl('h2', { text: 'Summarization' });

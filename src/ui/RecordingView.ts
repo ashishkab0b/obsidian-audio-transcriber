@@ -317,7 +317,10 @@ export class RecordingView extends ItemView {
 
 			this.updateStatus('Uploading audio...');
 
-			const assemblyAiClient = new AssemblyAIClient(assemblyAiKey);
+			const assemblyAiClient = new AssemblyAIClient(
+				assemblyAiKey,
+				this.plugin.settings.transcriptionModel
+			);
 
 			this.updateStatus('Transcribing...');
 			this.session.segments = await assemblyAiClient.transcribeAudio(this.session.audioBlob);

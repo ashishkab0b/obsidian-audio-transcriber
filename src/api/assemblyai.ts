@@ -1,4 +1,11 @@
-import { DiarizedSegment } from '../types';
+import { DiarizedSegment, TranscriptionModel } from '../types';
+
+const TRANSCRIPTION_MODEL_HOURLY_RATES: Record<TranscriptionModel, number> = {
+	'universal-2': 0.15,
+	'universal-3-pro': 0.21,
+};
+
+const SPEAKER_DIARIZATION_HOURLY_RATE = 0.02;
 
 interface AssemblyAIUploadResponse {
 	upload_url: string;
@@ -27,9 +34,11 @@ interface AssemblyAITranscriptResponse {
 export class AssemblyAIClient {
 	private apiKey: string;
 	private baseUrl = 'https://api.assemblyai.com/v2';
+	private transcriptionModel: TranscriptionModel;
 
-	constructor(apiKey: string) {
+	constructor(apiKey: string, transcriptionModel: TranscriptionModel = 'universal-2') {
 		this.apiKey = apiKey;
+		this.transcriptionModel = transcriptionModel;
 	}
 
 	async uploadAudio(blob: Blob): Promise<string> {
@@ -64,7 +73,7 @@ export class AssemblyAIClient {
 		const request: AssemblyAITranscriptRequest = {
 			audio_url: uploadUrl,
 			speaker_labels: true,
-			speech_models: ['universal-3-pro'],
+			speech_models: [this.transcriptionModel],
 		};
 
 		console.log('Submitting transcript with request:', JSON.stringify(request));
@@ -162,10 +171,9 @@ export class AssemblyAIClient {
 
 		const maxEndTime = Math.max(...segments.map(s => s.end));
 		const durationSeconds = maxEndTime / 1000; // convert from ms to seconds
-		const durationMinutes = durationSeconds / 60;
+		const durationHours = durationSeconds / 3600;
 
-		// AssemblyAI costs $0.25 per minute for audio-only (can vary by model)
-		// Using $0.25/min as a conservative estimate
-		return Math.round(durationMinutes * 0.25 * 100) / 100; // Round to 2 decimal places
+		const hourlyRate = TRANSCRIPTION_MODEL_HOURLY_RATES[this.transcriptionModel] + SPEAKER_DIARIZATION_HOURLY_RATE;
+		return Math.round(durationHours * hourlyRate * 10000) / 10000;
 	}
 }
