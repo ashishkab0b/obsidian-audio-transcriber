@@ -19,9 +19,14 @@ export interface ActionItem {
 	deadline: string;
 }
 
+export interface OutlineSection {
+	title: string;
+	bullets: string[];
+}
+
 export interface SummaryResult {
 	summary: string;
-	outline: string[];
+	outline: OutlineSection[];
 	decisions: string[]; // meeting only
 	actionItems: ActionItem[]; // meeting only
 	takeaways: string[]; // lecture only

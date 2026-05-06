@@ -78,8 +78,11 @@ export class MarkdownBuilder {
 		markdown += `${summaryResult.summary}\n\n`;
 
 		markdown += '## Outline\n';
-		summaryResult.outline.forEach((point) => {
-			markdown += `- ${point}\n`;
+		summaryResult.outline.forEach((section) => {
+			markdown += `- **${this.cleanMarkdownListText(section.title)}**\n`;
+			section.bullets.forEach((bullet) => {
+				markdown += `  - ${this.cleanMarkdownListText(bullet)}\n`;
+			});
 		});
 		markdown += '\n';
 
@@ -131,5 +134,9 @@ export class MarkdownBuilder {
 				.padStart(2, '0')}`;
 		}
 		return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+	}
+
+	private static cleanMarkdownListText(text: string): string {
+		return text.trim().replace(/^(?:[-*•]\s+|\d+[.)]\s+)/, '').trim();
 	}
 }

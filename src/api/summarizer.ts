@@ -1,4 +1,4 @@
-import { DiarizedSegment, SessionType, SummaryResult, TimestampedNote, ActionItem } from '../types';
+import { DiarizedSegment, SessionType, SummaryResult, TimestampedNote, ActionItem, OutlineSection } from '../types';
 import {
 	getMeetingOutlinePrompt,
 	getMeetingActionItemsPrompt,
@@ -46,7 +46,7 @@ export class Summarizer {
 		segments: DiarizedSegment[],
 		notes: TimestampedNote[],
 		verbosity: 'brief' | 'detailed'
-	): Promise<ComponentResult<{ outline: string[] }>> {
+	): Promise<ComponentResult<{ outline: OutlineSection[] }>> {
 		const transcript = this.formatTranscript(segments);
 		const notesText = this.formatNotes(notes);
 		const systemPrompt = getMeetingOutlinePrompt(verbosity);
@@ -58,7 +58,7 @@ export class Summarizer {
 		];
 
 		const response = await this.callOpenAI(MEETING_MODELS.outline, messages);
-		const outline = response.data.outline;
+		const outline = this.normalizeOutline(response.data.outline);
 
 		return {
 			data: { outline },
@@ -93,11 +93,11 @@ export class Summarizer {
 	}
 
 	async generateExecutiveSummary(
-		outline: string[],
+		outline: OutlineSection[],
 		verbosity: 'brief' | 'detailed'
 	): Promise<ComponentResult<{ summary: string }>> {
 		const systemPrompt = getMeetingExecutiveSummaryPrompt(verbosity);
-		const outlineText = outline.join('\n');
+		const outlineText = this.formatOutline(outline);
 		const userPrompt = `Here is the meeting outline:\n\n${outlineText}`;
 
 		const messages: OpenAIMessage[] = [
@@ -119,7 +119,7 @@ export class Summarizer {
 		segments: DiarizedSegment[],
 		notes: TimestampedNote[],
 		verbosity: 'brief' | 'detailed'
-	): Promise<ComponentResult<{ outline: string[] }>> {
+	): Promise<ComponentResult<{ outline: OutlineSection[] }>> {
 		const transcript = this.formatTranscript(segments);
 		const notesText = this.formatNotes(notes);
 		const systemPrompt = getTalkOutlinePrompt(verbosity);
@@ -131,7 +131,7 @@ export class Summarizer {
 		];
 
 		const response = await this.callOpenAI(TALK_MODELS.outline, messages);
-		const outline = response.data.outline;
+		const outline = this.normalizeOutline(response.data.outline);
 
 		return {
 			data: { outline },
@@ -141,11 +141,11 @@ export class Summarizer {
 	}
 
 	async generateTalkExecutiveSummary(
-		outline: string[],
+		outline: OutlineSection[],
 		verbosity: 'brief' | 'detailed'
 	): Promise<ComponentResult<{ summary: string; takeaways: string[] }>> {
 		const systemPrompt = getTalkExecutiveSummaryPrompt(verbosity);
-		const outlineText = outline.join('\n');
+		const outlineText = this.formatOutline(outline);
 		const userPrompt = `Here is the talk outline:\n\n${outlineText}`;
 
 		const messages: OpenAIMessage[] = [
@@ -221,6 +221,50 @@ export class Summarizer {
 			return `[${timeStr}] ${note.text}`;
 		});
 		return lines.join('\n');
+	}
+
+	private normalizeOutline(outline: unknown): OutlineSection[] {
+		if (!Array.isArray(outline)) {
+			return [];
+		}
+
+		return outline.map((section) => {
+			if (typeof section === 'string') {
+				return {
+					title: this.cleanOutlineText(section),
+					bullets: [],
+				};
+			}
+
+			if (section && typeof section === 'object') {
+				const value = section as { title?: unknown; bullets?: unknown };
+				return {
+					title: this.cleanOutlineText(typeof value.title === 'string' ? value.title : 'Untitled topic'),
+					bullets: Array.isArray(value.bullets)
+						? value.bullets
+							.filter((bullet): bullet is string => typeof bullet === 'string')
+							.map((bullet) => this.cleanOutlineText(bullet))
+							.filter((bullet) => bullet.length > 0)
+						: [],
+				};
+			}
+
+			return {
+				title: 'Untitled topic',
+				bullets: [],
+			};
+		}).filter((section) => section.title.length > 0 || section.bullets.length > 0);
+	}
+
+	private cleanOutlineText(text: string): string {
+		return text.trim().replace(/^(?:[-*•]\s+|\d+[.)]\s+)/, '').trim();
+	}
+
+	private formatOutline(outline: OutlineSection[]): string {
+		return outline.map((section) => {
+			const bullets = section.bullets.map((bullet) => `- ${bullet}`).join('\n');
+			return bullets ? `${section.title}\n${bullets}` : section.title;
+		}).join('\n\n');
 	}
 
 	private formatTime(ms: number): string {

@@ -512,10 +512,25 @@ export class RecordingView extends ItemView {
 
 		// Insert output into the active note
 		const currentNoteContent = await this.app.vault.read(this.targetNoteFile);
-		const newContent = currentNoteContent + '\n\n' + outputContent;
+		const newContent = this.insertOutputIntoNote(currentNoteContent, outputContent);
 		await this.app.vault.modify(this.targetNoteFile, newContent);
 
 		console.log('Recording output inserted into note:', this.targetNoteFile.path);
+	}
+
+	private insertOutputIntoNote(noteContent: string, outputContent: string): string {
+		const markerPattern = /^[\t ]*\/transcribe[\t ]*$/m;
+		const output = outputContent.trim();
+
+		if (markerPattern.test(noteContent)) {
+			return noteContent.replace(markerPattern, output);
+		}
+
+		if (noteContent.trim().length === 0) {
+			return output;
+		}
+
+		return `${output}\n\n${noteContent}`;
 	}
 
 	private updateTimer(timerEl: HTMLElement): void {

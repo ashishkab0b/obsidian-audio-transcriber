@@ -11,11 +11,26 @@ Instructions:
 Return a JSON object with this structure:
 {
 	"outline": [
-		"**Topic Name**: \u2022 key point 1\u2022 key point 2\u2022 key point 3",
-		"**Another Topic**: \u2022 key point 1\u2022 key point 2",
+		{
+			"title": "Topic name",
+			"bullets": [
+				"Key point 1",
+				"Key point 2",
+				"Key point 3"
+			]
+		},
+		{
+			"title": "Another topic",
+			"bullets": [
+				"Key point 1",
+				"Key point 2"
+			]
+		}
 		...
 	]
-}`;
+}
+
+Do not include Markdown bullet characters, Unicode bullet characters, or numbering inside title or bullets.`;
 }
 
 export function getMeetingActionItemsPrompt(): string {
@@ -74,11 +89,26 @@ Instructions:
 Return a JSON object with this structure:
 {
 	"outline": [
-		"**Topic Name**: • key concept 1 • key concept 2 • key concept 3",
-		"**Another Topic**: • key concept 1 • key concept 2",
+		{
+			"title": "Topic name",
+			"bullets": [
+				"Key concept 1",
+				"Key concept 2",
+				"Key concept 3"
+			]
+		},
+		{
+			"title": "Another topic",
+			"bullets": [
+				"Key concept 1",
+				"Key concept 2"
+			]
+		}
 		...
 	]
-}`;
+}
+
+Do not include Markdown bullet characters, Unicode bullet characters, or numbering inside title or bullets.`;
 }
 
 export function getTalkExecutiveSummaryPrompt(verbosity: 'brief' | 'detailed'): string {
