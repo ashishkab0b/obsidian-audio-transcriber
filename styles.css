@@ -97,6 +97,38 @@
 	color: var(--text-muted);
 }
 
+.audio-transcriber-view .auto-stop-guard {
+	padding: 0.75rem;
+	background-color: var(--background-secondary);
+	border-radius: 4px;
+	color: var(--text-muted);
+	font-size: 0.9rem;
+	line-height: 1.4;
+}
+
+.audio-transcriber-view .auto-stop-warning {
+	border-left: 3px solid var(--text-warning);
+	color: var(--text-normal);
+}
+
+.audio-transcriber-view .auto-stop-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 0.75rem;
+}
+
+.audio-transcriber-view .auto-stop-actions button {
+	flex: 1 1 5.5rem;
+	padding: 0.5rem 0.75rem;
+	font-size: 0.85rem;
+}
+
+.audio-transcriber-view .auto-stop-actions .auto-stop-stop-now {
+	background-color: var(--background-modifier-error);
+	color: var(--text-on-accent);
+}
+
 .audio-transcriber-view .notes-list {
 	display: flex;
 	flex-direction: column;

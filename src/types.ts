@@ -44,6 +44,11 @@ export interface APICost {
 export interface RecordingSession {
 	sessionType: SessionType;
 	startTime: Date;
+	expectedDurationMinutes: number;
+	autoStopWarningAtSeconds: number;
+	autoStopDeadlineSeconds: number;
+	autoStopWarningShown: boolean;
+	autoStopTriggered: boolean;
 	notes: TimestampedNote[];
 	audioBlob: Blob | null;
 	segments: DiarizedSegment[];

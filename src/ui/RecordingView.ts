@@ -7,10 +7,15 @@ import { Summarizer } from '../api/summarizer';
 import { NoteWriter } from '../output/NoteWriter';
 import { MarkdownBuilder } from '../output/MarkdownBuilder';
 import { MEETING_MODELS, TALK_MODELS, computeCost } from '../config/models';
+import { RecordingDurationModal } from './RecordingDurationModal';
 
 export const RECORDING_VIEW_TYPE = 'audio-transcriber-view';
 
 type ViewState = 'idle' | 'recording' | 'processing' | 'done';
+
+const DEFAULT_EXPECTED_DURATION_MINUTES = 60;
+const AUTO_STOP_GRACE_SECONDS = 10 * 60;
+const EXTENSION_MINUTES = [15, 30, 60];
 
 export class RecordingView extends ItemView {
 	private plugin: AudioRecorderPlugin;
@@ -20,6 +25,7 @@ export class RecordingView extends ItemView {
 	private timerInterval: number | null = null;
 	private animationFrame: number | null = null;
 	private targetNoteFile: any = null;
+	private isStopping = false;
 
 	constructor(leaf: WorkspaceLeaf, plugin: AudioRecorderPlugin) {
 		super(leaf);
@@ -124,6 +130,8 @@ export class RecordingView extends ItemView {
 		const timerEl = content.createDiv('timer');
 		timerEl.textContent = '00:00:00';
 		timerEl.addClass('timer-compact');
+
+		this.renderAutoStopGuard(content);
 
 		// Stop button
 		const buttonGroup = content.createDiv('button-group');
@@ -239,11 +247,22 @@ export class RecordingView extends ItemView {
 			return;
 		}
 
+		const expectedDurationMinutes = await this.promptForExpectedDuration();
+		if (expectedDurationMinutes === null) {
+			return;
+		}
+
 		console.log('Recording into note:', this.targetNoteFile.path);
 
+		this.isStopping = false;
 		this.session = {
 			sessionType,
 			startTime: new Date(),
+			expectedDurationMinutes,
+			autoStopWarningAtSeconds: expectedDurationMinutes * 60,
+			autoStopDeadlineSeconds: expectedDurationMinutes * 60 + AUTO_STOP_GRACE_SECONDS,
+			autoStopWarningShown: false,
+			autoStopTriggered: false,
 			notes: [],
 			audioBlob: null,
 			segments: [],
@@ -269,6 +288,11 @@ export class RecordingView extends ItemView {
 			return;
 		}
 
+		if (this.isStopping) {
+			return;
+		}
+
+		this.isStopping = true;
 		this.cleanup();
 
 		try {
@@ -281,6 +305,7 @@ export class RecordingView extends ItemView {
 				alert('No audio detected. Please record some audio before stopping.');
 				this.state = 'idle';
 				this.session = null;
+				this.isStopping = false;
 				this.render();
 				return;
 			}
@@ -294,6 +319,7 @@ export class RecordingView extends ItemView {
 		} catch (error) {
 			console.error('Failed to stop recording:', error);
 			this.state = 'idle';
+			this.isStopping = false;
 			this.render();
 		}
 	}
@@ -534,6 +560,10 @@ export class RecordingView extends ItemView {
 	}
 
 	private updateTimer(timerEl: HTMLElement): void {
+		if (this.timerInterval !== null) {
+			clearInterval(this.timerInterval);
+		}
+
 		this.timerInterval = window.setInterval(() => {
 			if (this.recorder) {
 				const seconds = this.recorder.getElapsedSeconds();
@@ -543,10 +573,108 @@ export class RecordingView extends ItemView {
 				timerEl.textContent = `${hours.toString().padStart(2, '0')}:${minutes
 					.toString()
 					.padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+				this.checkAutoStop(seconds);
 			}
 		}, 1000);
 
 		this.plugin.registerInterval(this.timerInterval);
+	}
+
+	private promptForExpectedDuration(): Promise<number | null> {
+		return new Promise((resolve) => {
+			new RecordingDurationModal(
+				this.app,
+				DEFAULT_EXPECTED_DURATION_MINUTES,
+				resolve
+			).open();
+		});
+	}
+
+	private renderAutoStopGuard(content: HTMLElement): void {
+		if (!this.session) {
+			return;
+		}
+
+		const guard = content.createDiv('auto-stop-guard');
+
+		if (!this.session.autoStopWarningShown) {
+			guard.textContent = `Auto-stop reminder at ${this.session.expectedDurationMinutes} minutes.`;
+			return;
+		}
+
+		guard.addClass('auto-stop-warning');
+		guard.createEl('strong', { text: 'Expected duration reached.' });
+		guard.createEl('span', {
+			cls: 'auto-stop-countdown',
+			text: ` Auto-stopping in ${this.formatRemainingAutoStopTime()}.`,
+		});
+
+		const actions = guard.createDiv('auto-stop-actions');
+		EXTENSION_MINUTES.forEach((minutes) => {
+			const button = actions.createEl('button', { text: `+${minutes} min` });
+			button.type = 'button';
+			button.addEventListener('click', () => this.extendRecording(minutes));
+		});
+
+		const stopButton = actions.createEl('button', { text: 'Stop now' });
+		stopButton.type = 'button';
+		stopButton.addClass('auto-stop-stop-now');
+		stopButton.addEventListener('click', () => this.stopRecording());
+	}
+
+	private checkAutoStop(elapsedSeconds: number): void {
+		if (!this.session || this.state !== 'recording' || this.isStopping) {
+			return;
+		}
+
+		if (!this.session.autoStopWarningShown && elapsedSeconds >= this.session.autoStopWarningAtSeconds) {
+			this.session.autoStopWarningShown = true;
+			this.render();
+			return;
+		}
+
+		if (this.session.autoStopWarningShown) {
+			this.updateAutoStopCountdown();
+		}
+
+		if (elapsedSeconds >= this.session.autoStopDeadlineSeconds) {
+			this.session.autoStopTriggered = true;
+			this.stopRecording();
+		}
+	}
+
+	private extendRecording(minutes: number): void {
+		if (!this.session || !this.recorder || this.isStopping) {
+			return;
+		}
+
+		const elapsedSeconds = this.recorder.getElapsedSeconds();
+		this.session.autoStopWarningAtSeconds = elapsedSeconds + minutes * 60;
+		this.session.autoStopDeadlineSeconds = this.session.autoStopWarningAtSeconds + AUTO_STOP_GRACE_SECONDS;
+		this.session.expectedDurationMinutes = Math.ceil(this.session.autoStopWarningAtSeconds / 60);
+		this.session.autoStopWarningShown = false;
+		this.render();
+	}
+
+	private updateAutoStopCountdown(): void {
+		const countdownEl = this.containerEl.querySelector('.auto-stop-countdown');
+		if (countdownEl) {
+			countdownEl.textContent = ` Auto-stopping in ${this.formatRemainingAutoStopTime()}.`;
+		}
+	}
+
+	private formatRemainingAutoStopTime(): string {
+		if (!this.session || !this.recorder) {
+			return '00:00';
+		}
+
+		const remainingSeconds = Math.max(
+			0,
+			this.session.autoStopDeadlineSeconds - this.recorder.getElapsedSeconds()
+		);
+		const minutes = Math.floor(remainingSeconds / 60);
+		const seconds = remainingSeconds % 60;
+		return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 	}
 
 
