@@ -75,13 +75,13 @@ export class MarkdownBuilder {
 		let markdown = `# ${typeLabel} — ${date}\n\n`;
 
 		markdown += '## Summary\n';
-		markdown += `${summaryResult.summary}\n\n`;
+		markdown += `${this.normalizeMarkdownText(summaryResult.summary)}\n\n`;
 
 		markdown += '## Outline\n';
 		summaryResult.outline.forEach((section) => {
 			markdown += `- **${this.cleanMarkdownListText(section.title)}**\n`;
 			section.bullets.forEach((bullet) => {
-				markdown += `  - ${this.cleanMarkdownListText(bullet)}\n`;
+				markdown += this.renderListItem(bullet, '  ');
 			});
 		});
 		markdown += '\n';
@@ -90,7 +90,7 @@ export class MarkdownBuilder {
 			if (summaryResult.decisions.length > 0) {
 				markdown += '## Decisions\n';
 				summaryResult.decisions.forEach((decision) => {
-					markdown += `- ${decision}\n`;
+					markdown += this.renderListItem(decision, '');
 				});
 				markdown += '\n';
 			}
@@ -107,7 +107,7 @@ export class MarkdownBuilder {
 			if (summaryResult.takeaways.length > 0) {
 				markdown += '## Key Takeaways\n';
 				summaryResult.takeaways.forEach((takeaway) => {
-					markdown += `- ${takeaway}\n`;
+					markdown += this.renderListItem(takeaway, '');
 				});
 				markdown += '\n';
 			}
@@ -137,6 +137,34 @@ export class MarkdownBuilder {
 	}
 
 	private static cleanMarkdownListText(text: string): string {
-		return text.trim().replace(/^(?:[-*•]\s+|\d+[.)]\s+)/, '').trim();
+		return text.trim().replace(/^(?:[-*•◦●]\s+|\d+[.)]\s+)/, '').trim();
+	}
+
+	private static normalizeMarkdownText(text: string): string {
+		return text
+			.split('\n')
+			.map((line) => line.replace(/^(\s*)(?:[-*•◦●]\s+|\d+[.)]\s+)/, '$1- '))
+			.join('\n')
+			.trim();
+	}
+
+	private static renderListItem(text: string, indent: string): string {
+		const lines = text
+			.split('\n')
+			.map((line) => this.cleanMarkdownListText(line))
+			.filter((line) => line.length > 0);
+
+		if (lines.length === 0) {
+			return '';
+		}
+
+		const childIndent = `${indent}  `;
+		const renderedLines = [`${indent}- ${lines[0]}`];
+
+		lines.slice(1).forEach((line) => {
+			renderedLines.push(`${childIndent}- ${line}`);
+		});
+
+		return `${renderedLines.join('\n')}\n`;
 	}
 }

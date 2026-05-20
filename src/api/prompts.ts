@@ -1,5 +1,5 @@
 export function getMeetingOutlinePrompt(verbosity: 'brief' | 'detailed'): string {
-	const sentenceCount = verbosity === 'brief' ? '2-3' : '4-6';
+	void verbosity;
 	return `You are an expert meeting analyst. Your task is to create a comprehensive outline of a meeting, organized by thematic sections rather than chronological order.
 
 Instructions:
@@ -7,6 +7,7 @@ Instructions:
 - Each section should have a clear title and 2-4 bullet points capturing key discussion points
 - The outline should be thorough and cover all major discussion areas
 - Use clear, action-oriented language
+- If a bullet needs sub-points, keep the line breaks inside that bullet string and use hyphens for sub-points
 
 Return a JSON object with this structure:
 {
@@ -30,7 +31,7 @@ Return a JSON object with this structure:
 	]
 }
 
-Do not include Markdown bullet characters, Unicode bullet characters, or numbering inside title or bullets.`;
+Do not include Unicode bullet characters such as •, ◦, or ●. When bullet markers are needed inside a multi-line bullet string, use hyphens only.`;
 }
 
 export function getMeetingActionItemsPrompt(): string {
@@ -78,6 +79,7 @@ Return a JSON object with this structure:
 }
 
 export function getTalkOutlinePrompt(verbosity: 'brief' | 'detailed'): string {
+	void verbosity;
 	return `You are an expert talk analyst. Your task is to create a comprehensive outline of a talk or lecture, organized by thematic sections.
 
 Instructions:
@@ -85,6 +87,7 @@ Instructions:
 - Each section should have a clear title and 2-4 bullet points capturing key concepts
 - The outline should be thorough and cover all major themes discussed
 - Use clear, concept-focused language
+- If a bullet needs sub-points, keep the line breaks inside that bullet string and use hyphens for sub-points
 
 Return a JSON object with this structure:
 {
@@ -108,7 +111,7 @@ Return a JSON object with this structure:
 	]
 }
 
-Do not include Markdown bullet characters, Unicode bullet characters, or numbering inside title or bullets.`;
+Do not include Unicode bullet characters such as •, ◦, or ●. When bullet markers are needed inside a multi-line bullet string, use hyphens only.`;
 }
 
 export function getTalkExecutiveSummaryPrompt(verbosity: 'brief' | 'detailed'): string {

@@ -257,7 +257,11 @@ export class Summarizer {
 	}
 
 	private cleanOutlineText(text: string): string {
-		return text.trim().replace(/^(?:[-*•]\s+|\d+[.)]\s+)/, '').trim();
+		return text
+			.split('\n')
+			.map((line) => line.trim().replace(/^(?:[-*•◦●]\s+|\d+[.)]\s+)/, '').trim())
+			.filter((line) => line.length > 0)
+			.join('\n');
 	}
 
 	private formatOutline(outline: OutlineSection[]): string {
