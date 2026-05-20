@@ -8,6 +8,10 @@ Instructions:
 - The outline should be thorough and cover all major discussion areas
 - Use clear, action-oriented language
 - If a bullet needs sub-points, keep the line breaks inside that bullet string and use hyphens for sub-points
+- Use the user notes as timestamped emphasis/context from the recorder
+- Treat user notes as the user's observations, not as spoken transcript
+- Prioritize topics mentioned in user notes when they are supported by the transcript
+- Note timestamps will arise shortly after the relevant portion of the meeting
 
 Return a JSON object with this structure:
 {
@@ -88,6 +92,10 @@ Instructions:
 - The outline should be thorough and cover all major themes discussed
 - Use clear, concept-focused language
 - If a bullet needs sub-points, keep the line breaks inside that bullet string and use hyphens for sub-points
+- Use the user notes as timestamped emphasis/context from the recorder
+- Treat user notes as the user's observations, not as spoken transcript
+- Prioritize topics mentioned in user notes when they are supported by the transcript
+- Note timestamps will arise shortly after the relevant portion of the talk
 
 Return a JSON object with this structure:
 {
