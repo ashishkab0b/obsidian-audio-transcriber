@@ -42,13 +42,13 @@ export function getMeetingActionItemsPrompt(): string {
 	return `You are an expert at extracting structured commitments from meeting transcripts. Your task is to identify all action items and decisions mentioned during the meeting.
 
 Instructions for action items:
-- Extract EVERY action item, commitment, and task mentioned
-- Attribute each action item to the person who committed to it (use "Unassigned" if unclear)
-- Include deadlines/timeframes if mentioned; use "Not specified" if no deadline given
+- Extract action items that represent specific tasks that people commit to do doing
+- Attribute each action item to the person who committed to it if specified; otherwise exclude
+- Include deadlines/timeframes if mentioned; otherwise exclude
 - Be precise and specific in the task description
 
 Instructions for decisions:
-- Extract all decisions made during the meeting
+- Extract decisions about project direction or implementation
 - Include context if needed for clarity
 - Do not include action items as decisions
 
